@@ -1,108 +1,205 @@
-// Элементы модальных окон
-const authModal = document.getElementById('authModal');
-const registerModal = document.getElementById('registerModal');
-const loginBtn = document.getElementById('loginBtn');
+// Элементы страниц
+const mainPage = document.getElementById('mainPage');
+const authPage = document.getElementById('authPage');
+const registerPage = document.getElementById('registerPage');
+const homeLink = document.getElementById('homeLink');
+const loginLink = document.getElementById('loginLink');
 const createServerBtn = document.getElementById('createServerBtn');
 const heroCreateBtn = document.getElementById('heroCreateBtn');
-const closeBtn = document.querySelector('.close');
-const closeRegisterBtn = document.querySelector('.close-register');
-const showRegister = document.getElementById('showRegister');
-const showLogin = document.getElementById('showLogin');
+const showRegisterLink = document.getElementById('showRegisterLink');
+const showLoginLink = document.getElementById('showLoginLink');
 
-// Функция открытия модального окна авторизации
-function openAuthModal() {
-    authModal.style.display = 'block';
-    registerModal.style.display = 'none';
+// Формы и кнопки
+const authForm = document.getElementById('authForm');
+const registerForm = document.getElementById('registerForm');
+const authSubmit = document.getElementById('authSubmit');
+const registerSubmit = document.getElementById('registerSubmit');
+
+// Переменные для reCAPTCHA
+let authRecaptchaVerified = false;
+let registerRecaptchaVerified = false;
+
+// Показать главную страницу
+function showMainPage() {
+    mainPage.style.display = 'block';
+    authPage.style.display = 'none';
+    registerPage.style.display = 'none';
+    document.title = 'Gamely - Бесплатный игровой хостинг';
 }
 
-// Функция открытия модального окна регистрации
-function openRegisterModal() {
-    registerModal.style.display = 'block';
-    authModal.style.display = 'none';
+// Показать страницу авторизации
+function showAuthPage() {
+    mainPage.style.display = 'none';
+    authPage.style.display = 'block';
+    registerPage.style.display = 'none';
+    document.title = 'Авторизация - Gamely';
+    resetAuthRecaptcha();
 }
 
-// Функция закрытия всех модальных окон
-function closeAllModals() {
-    authModal.style.display = 'none';
-    registerModal.style.display = 'none';
+// Показать страницу регистрации
+function showRegisterPage() {
+    mainPage.style.display = 'none';
+    authPage.style.display = 'none';
+    registerPage.style.display = 'block';
+    document.title = 'Регистрация - Gamely';
+    resetRegisterRecaptcha();
 }
 
-// Обработчики событий для кнопок авторизации
-loginBtn.addEventListener('click', function(e) {
+// Обработчики навигации
+homeLink.addEventListener('click', function(e) {
     e.preventDefault();
-    openAuthModal();
+    showMainPage();
+});
+
+loginLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    showAuthPage();
 });
 
 createServerBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    openAuthModal();
+    showAuthPage();
 });
 
 heroCreateBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    openAuthModal();
+    showAuthPage();
 });
 
-// Переключение между окнами авторизации и регистрации
-showRegister.addEventListener('click', function(e) {
+// Переключение между авторизацией и регистрацией
+showRegisterLink.addEventListener('click', function(e) {
     e.preventDefault();
-    openRegisterModal();
+    showRegisterPage();
 });
 
-showLogin.addEventListener('click', function(e) {
+showLoginLink.addEventListener('click', function(e) {
     e.preventDefault();
-    openAuthModal();
+    showAuthPage();
 });
 
-// Закрытие модальных окон
-closeBtn.addEventListener('click', closeAllModals);
-closeRegisterBtn.addEventListener('click', closeAllModals);
+// reCAPTCHA callback функции для авторизации
+function onRecaptchaSuccess(response) {
+    console.log('reCAPTCHA авторизации пройдена:', response);
+    authRecaptchaVerified = true;
+    enableAuthSubmit();
+}
 
-// Закрытие при клике вне окна
-window.addEventListener('click', function(e) {
-    if (e.target === authModal || e.target === registerModal) {
-        closeAllModals();
+function onRecaptchaExpired() {
+    console.log('reCAPTCHA авторизации истекла');
+    authRecaptchaVerified = false;
+    disableAuthSubmit();
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
     }
-});
+}
 
-// Проверка на бота и обработка формы авторизации
-document.getElementById('authForm').addEventListener('submit', function(e) {
+// reCAPTCHA callback функции для регистрации
+function onRegisterRecaptchaSuccess(response) {
+    console.log('reCAPTCHA регистрации пройдена:', response);
+    registerRecaptchaVerified = true;
+    enableRegisterSubmit();
+}
+
+function onRegisterRecaptchaExpired() {
+    console.log('reCAPTCHA регистрации истекла');
+    registerRecaptchaVerified = false;
+    disableRegisterSubmit();
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+}
+
+// Управление кнопками авторизации
+function enableAuthSubmit() {
+    authSubmit.disabled = false;
+    authSubmit.style.opacity = '1';
+    authSubmit.style.cursor = 'pointer';
+}
+
+function disableAuthSubmit() {
+    authSubmit.disabled = true;
+    authSubmit.style.opacity = '0.6';
+    authSubmit.style.cursor = 'not-allowed';
+}
+
+// Управление кнопками регистрации
+function enableRegisterSubmit() {
+    registerSubmit.disabled = false;
+    registerSubmit.style.opacity = '1';
+    registerSubmit.style.cursor = 'pointer';
+}
+
+function disableRegisterSubmit() {
+    registerSubmit.disabled = true;
+    registerSubmit.style.opacity = '0.6';
+    registerSubmit.style.cursor = 'not-allowed';
+}
+
+// Сброс reCAPTCHA
+function resetAuthRecaptcha() {
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    authRecaptchaVerified = false;
+    disableAuthSubmit();
+}
+
+function resetRegisterRecaptcha() {
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    registerRecaptchaVerified = false;
+    disableRegisterSubmit();
+}
+
+// Обработка формы авторизации
+authForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const botAnswer = document.getElementById('botAnswer').value;
-    
-    // Проверка ответа на вопрос (2 + 2 = 4)
-    if (parseInt(botAnswer) !== 4) {
-        alert('Ошибка: Неверный ответ на проверочный вопрос!');
+    if (!authRecaptchaVerified) {
+        alert('Пожалуйста, пройдите проверку "Я не робот"');
         return;
     }
     
-    // Если проверка пройдена
-    alert('Авторизация успешна! В реальном приложении здесь будет отправка данных на сервер');
-    closeAllModals();
+    authSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
+    authSubmit.disabled = true;
     
-    // Очистка формы
-    this.reset();
+    setTimeout(() => {
+        alert('Авторизация успешна!');
+        showMainPage();
+        authForm.reset();
+        resetAuthRecaptcha();
+        authSubmit.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+    }, 1500);
 });
 
-// Проверка на бота и обработка формы регистрации
-document.getElementById('registerForm').addEventListener('submit', function(e) {
+// Обработка формы регистрации
+registerForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const botAnswer = document.getElementById('registerBotAnswer').value;
-    
-    // Проверка ответа на вопрос (7 + 3 = 10)
-    if (parseInt(botAnswer) !== 10) {
-        alert('Ошибка: Неверный ответ на проверочный вопрос!');
+    if (!registerRecaptchaVerified) {
+        alert('Пожалуйста, пройдите проверку "Я не робот"');
         return;
     }
     
-    // Если проверка пройдена
-    alert('Регистрация успешна! В реальном приложении здесь будет отправка данных на сервер');
-    closeAllModals();
+    const password = registerForm.querySelector('input[type="password"]').value;
+    const confirmPassword = registerForm.querySelectorAll('input[type="password"]')[1].value;
     
-    // Очистка формы
-    this.reset();
+    if (password !== confirmPassword) {
+        alert('Пароли не совпадают!');
+        return;
+    }
+    
+    registerSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
+    registerSubmit.disabled = true;
+    
+    setTimeout(() => {
+        alert('Регистрация успешна! Добро пожаловать в Gamely!');
+        showMainPage();
+        registerForm.reset();
+        resetRegisterRecaptcha();
+        registerSubmit.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+    }, 1500);
 });
 
 // Плавное появление элементов при загрузке
@@ -134,7 +231,6 @@ function createParticles() {
     
     document.querySelector('.hero-banner').appendChild(particlesContainer);
     
-    // Создаем несколько частиц
     for (let i = 0; i < 20; i++) {
         const particle = document.createElement('div');
         particle.style.cssText = `
@@ -154,15 +250,8 @@ function createParticles() {
     }
 }
 
-// Добавляем CSS для анимации частиц
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes float {
-        0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
-        50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
-    }
-`;
-document.head.appendChild(style);
-
 // Запускаем частицы после загрузки
 window.addEventListener('load', createParticles);
+
+// Показываем главную страницу по умолчанию
+showMainPage();
