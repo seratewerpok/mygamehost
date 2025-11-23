@@ -6,10 +6,8 @@
     <title>Gamely - Бесплатный игровой хостинг</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-    <!-- Хедер -->
     <header>
         <div class="header-container">
             <div class="logo-section">
@@ -34,19 +32,40 @@
                         <a href="#"><i class="fas fa-phone"></i> Контакты</a>
                     </div>
                 </div>
-                <a href="#" class="nav-link login-btn" id="loginLink">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Войти</span>
-                </a>
-                <button class="create-server-btn" id="createServerBtn">
-                    <i class="fas fa-plus"></i>
-                    Создать сервер
-                </button>
+                
+                <!-- Для неавторизованных пользователей -->
+                <div class="guest-nav" id="guestNav">
+                    <a href="#" class="nav-link login-btn" id="loginLink">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Войти</span>
+                    </a>
+                    <button class="create-server-btn" id="createServerBtn">
+                        <i class="fas fa-plus"></i>
+                        Создать сервер
+                    </button>
+                </div>
+                
+                <!-- Для авторизованных пользователей -->
+                <div class="user-nav" id="userNav" style="display: none;">
+                    <div class="user-dropdown">
+                        <button class="user-menu-btn" id="userMenuBtn">
+                            <i class="fas fa-bars"></i>
+                            <span class="username" id="username">Пользователь</span>
+                        </button>
+                        <div class="user-dropdown-content">
+                            <a href="#" id="dashboardLink"><i class="fas fa-tachometer-alt"></i> Панель управления</a>
+                            <a href="#"><i class="fas fa-server"></i> Список серверов</a>
+                            <a href="#"><i class="fas fa-plus-circle"></i> Создать сервер</a>
+                            <a href="#"><i class="fas fa-wallet"></i> Пополнить баланс</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                        </div>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
 
-    <!-- Главная страница -->
     <section class="main-page" id="mainPage">
         <div class="hero-banner">
             <div class="hero-content">
@@ -63,9 +82,140 @@
             </div>
             <div class="hero-background"></div>
         </div>
+
+        <!-- Секция "Почему выбирают нас" -->
+        <section class="features-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Почему выбирают нас?</h2>
+                    <p>Лучшее решение для вашего игрового сервера</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <h3>Цена</h3>
+                        <p>Мы предоставляем самые низкие цены во всем сегменте игровых хостингов, при этом сохраняя высокое качество обслуживания.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3>Производительность</h3>
+                        <p>Все серверы оборудованы процессорами AMD Ryzen 9 / Intel Core i9 с частотой до 5.7 GHz и оперативной памятью DDR4/DDR5.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Защита от DDoS</h3>
+                        <p>DDoS защита на уровнях L3-L4 с оборудованием Juniper, мощным сетевым соединением и собственными правилами фильтрации.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3>Надежность</h3>
+                        <p>Аптайм наших серверов составляет 99.99%, что означает доступность ваших серверов в любое время суток и любой день недели.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h3>Поддержка</h3>
+                        <p>Квалифицированная техническая поддержка через тикет-систему в Discord готова помочь решить любые проблемы с сервером 24/7.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-desktop"></i>
+                        </div>
+                        <h3>Простота</h3>
+                        <p>Интуитивно понятный интерфейс управления позволяет быстро настроить сервер даже без специальных технических знаний.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция отзывов -->
+        <section class="reviews-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Отзывы наших клиентов</h2>
+                    <p>Что говорят игроки о нашем хостинге</p>
+                </div>
+                
+                <div class="reviews-grid">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <h4>Дмитрий</h4>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="review-text">Играем большой компанией на сервере, часто устраиваем ивенты по 50+ человек. За 4 месяца ни одного лага или краша. Всем очень довольны, тех поддержка разруливает любые проблемы.</p>
+                        <div class="review-footer">
+                            <span class="client-badge">Активный клиент</span>
+                            <span class="review-date">неделю назад</span>
+                        </div>
+                    </div>
+
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <h4>Анна</h4>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="review-text">До этого пользовалась бесплатным хостингом, но он постоянно лагал. Здесь даже на минимальном тарифе сервер работает идеально. Очень удобная панель управления.</p>
+                        <div class="review-footer">
+                            <span class="client-badge">Активный клиент</span>
+                            <span class="review-date">2 недели назад</span>
+                        </div>
+                    </div>
+
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <h4>Игорь</h4>
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="review-text">Отличный хостинг! Пользуюсь уже полгода, за все время ни одной серьезной проблемы. Особенно радует скорость работы поддержки – любой вопрос решается максимально быстро.</p>
+                        <div class="review-footer">
+                            <span class="client-badge">Активный клиент</span>
+                            <span class="review-date">месяц назад</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </section>
 
-    <!-- Страница авторизации -->
     <section class="auth-page" id="authPage">
         <div class="auth-container">
             <div class="auth-card">
@@ -77,19 +227,14 @@
                 <form class="auth-form" id="authForm">
                     <div class="form-group">
                         <label>Email или логин:</label>
-                        <input type="text" placeholder="Введите ваш email или логин" required>
+                        <input type="text" id="authLogin" placeholder="Введите ваш email или логин" required>
                     </div>
                     <div class="form-group">
                         <label>Пароль:</label>
-                        <input type="password" placeholder="Введите пароль" required>
+                        <input type="password" id="authPassword" placeholder="Введите пароль" required>
                     </div>
                     
-                    <!-- Google reCAPTCHA -->
-                    <div class="recaptcha-container">
-                        <div class="g-recaptcha" data-sitekey="6LfuBRYsAAAAALEHG_JhNB35JRaffKiDLlq8SnR0" data-callback="onRecaptchaSuccess" data-expired-callback="onRecaptchaExpired"></div>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary auth-submit" id="authSubmit" disabled>
+                    <button type="submit" class="btn-primary auth-submit">
                         <i class="fas fa-sign-in-alt"></i>
                         Войти
                     </button>
@@ -103,7 +248,6 @@
         </div>
     </section>
 
-    <!-- Страница регистрации -->
     <section class="auth-page" id="registerPage">
         <div class="auth-container">
             <div class="auth-card">
@@ -115,19 +259,22 @@
                 <form class="auth-form" id="registerForm">
                     <div class="form-group">
                         <label>Email:</label>
-                        <input type="email" placeholder="Введите ваш email" required>
+                        <input type="email" id="regEmail" placeholder="Введите ваш email" required>
+                        <div class="error-message" id="emailError"></div>
                     </div>
                     <div class="form-group">
                         <label>Логин:</label>
-                        <input type="text" placeholder="Придумайте логин" required>
+                        <input type="text" id="regLogin" placeholder="Придумайте логин" required>
+                        <div class="error-message" id="loginError"></div>
                     </div>
                     <div class="form-group">
                         <label>Пароль:</label>
-                        <input type="password" placeholder="Придумайте пароль" required>
+                        <input type="password" id="regPassword" placeholder="Придумайте пароль" required>
                     </div>
                     <div class="form-group">
                         <label>Повторите пароль:</label>
-                        <input type="password" placeholder="Повторите пароль" required>
+                        <input type="password" id="regConfirmPassword" placeholder="Повторите пароль" required>
+                        <div class="error-message" id="passwordError"></div>
                     </div>
 
                     <div class="register-features">
@@ -140,12 +287,7 @@
                         </ul>
                     </div>
                     
-                    <!-- Google reCAPTCHA -->
-                    <div class="recaptcha-container">
-                        <div class="g-recaptcha" data-sitekey="6LfuBRYsAAAAALEHG_JhNB35JRaffKiDLlq8SnR0" data-callback="onRegisterRecaptchaSuccess" data-expired-callback="onRegisterRecaptchaExpired"></div>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary auth-submit" id="registerSubmit" disabled>
+                    <button type="submit" class="btn-primary auth-submit">
                         <i class="fas fa-user-plus"></i>
                         Зарегистрироваться
                     </button>
@@ -154,6 +296,99 @@
                         <a href="#" id="showLoginLink">Уже есть аккаунт? Войти</a>
                     </div>
                 </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Панель управления -->
+    <section class="auth-page" id="dashboardPage">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="breadcrumbs">
+                    <a href="#" id="dashboardHomeLink">Главная</a> > 
+                    <a href="#">Панель управления</a> > 
+                    <span>Мой аккаунт</span>
+                </div>
+                <h1>МОЙ АККАУНТ</h1>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="profile-info-section">
+                    <div class="info-card">
+                        <h3>Информация</h3>
+                        <div class="info-list">
+                            <div class="info-item">
+                                <span class="info-label">Айди</span>
+                                <span class="info-value" id="infoId">---</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Логин</span>
+                                <span class="info-value" id="infoLogin">---</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Почта</span>
+                                <span class="info-value" id="infoEmail">---</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Роль</span>
+                                <span class="info-value" id="infoRole">Пользователь</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Баланс</span>
+                                <span class="info-value" id="infoBalance">0 руб.</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Дата регистрации</span>
+                                <span class="info-value" id="infoRegDate">---</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Дискорд ID</span>
+                                <span class="info-value" id="infoDiscord">Не привязан</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Код приглашения</span>
+                                <span class="info-value">
+                                    <a href="#" class="show-code">Показать</a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions-card">
+                        <h3>Действия</h3>
+                        <div class="actions-list">
+                            <button class="action-btn deposit-btn" id="depositBtn">
+                                <i class="fas fa-wallet"></i>
+                                Пополнить баланс
+                            </button>
+                            <button class="action-btn logout-btn" id="dashboardLogoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Выйти из аккаунта
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="servers-section">
+                    <div class="servers-card">
+                        <div class="servers-header">
+                            <h3>Серверов</h3>
+                            <span class="servers-count" id="serversCount">0</span>
+                        </div>
+                        <div class="servers-content">
+                            <div class="no-servers" id="noServers">
+                                <p>У вас пока нет серверов</p>
+                                <button class="btn-primary" id="createServerDashboardBtn">
+                                    <i class="fas fa-plus"></i>
+                                    Создать сервер
+                                </button>
+                            </div>
+                            <div class="servers-list" id="serversList" style="display: none;">
+                                <!-- Список серверов будет здесь -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
