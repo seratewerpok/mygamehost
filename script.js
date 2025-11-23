@@ -29,7 +29,6 @@ const infoEmail = document.getElementById('infoEmail');
 const infoRole = document.getElementById('infoRole');
 const infoBalance = document.getElementById('infoBalance');
 const infoRegDate = document.getElementById('infoRegDate');
-const infoDiscord = document.getElementById('infoDiscord');
 const serversCount = document.getElementById('serversCount');
 
 // Формы и поля ввода
@@ -47,23 +46,61 @@ const emailError = document.getElementById('emailError');
 const loginError = document.getElementById('loginError');
 const passwordError = document.getElementById('passwordError');
 
-// Инициализация базы данных пользователей
+// Ключи для localStorage
+const USERS_KEY = 'gamely_users';
+const CURRENT_USER_KEY = 'gamely_current_user';
+
+// Инициализация базы данных пользователей с демо-пользователем
 function initUsersDatabase() {
-    if (!localStorage.getItem('users')) {
-        localStorage.setItem('users', JSON.stringify([]));
+    if (!localStorage.getItem(USERS_KEY)) {
+        const demoUsers = [
+            {
+                id: '98977',
+                login: 'demo',
+                email: 'demo@example.com',
+                password: '123456',
+                role: 'Пользователь',
+                balance: 0,
+                registrationDate: '18.11.2023 22:40:54'
+            }
+        ];
+        localStorage.setItem(USERS_KEY, JSON.stringify(demoUsers));
+        console.log('Демо-база создана. Логин: demo, Пароль: 123456');
     }
+}
+
+// Получить всех пользователей
+function getUsers() {
+    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+}
+
+// Сохранить пользователей
+function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 // Проверка существования email
 function isEmailExists(email) {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    return users.some(user => user.email === email);
+    const users = getUsers();
+    return users.some(user => user.email.toLowerCase() === email.toLowerCase());
 }
 
 // Проверка существования логина
 function isLoginExists(login) {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    return users.some(user => user.login === login);
+    const users = getUsers();
+    return users.some(user => user.login.toLowerCase() === login.toLowerCase());
+}
+
+// Получить пользователя по email
+function getUserByEmail(email) {
+    const users = getUsers();
+    return users.find(user => user.email.toLowerCase() === email.toLowerCase());
+}
+
+// Получить пользователя по логину
+function getUserByLogin(login) {
+    const users = getUsers();
+    return users.find(user => user.login.toLowerCase() === login.toLowerCase());
 }
 
 // Генерация ID пользователя
@@ -71,15 +108,10 @@ function generateUserId() {
     return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
-// Генерация Discord ID
-function generateDiscordId() {
-    return Math.floor(100000000000000000 + Math.random() * 900000000000000000).toString();
-}
-
 // Проверка авторизации при загрузке
 function checkAuth() {
     initUsersDatabase();
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
     if (currentUser) {
         showUserNav(currentUser.login);
         updateDashboardInfo(currentUser);
@@ -109,7 +141,6 @@ function updateDashboardInfo(user) {
     infoRole.textContent = user.role || 'Пользователь';
     infoBalance.textContent = (user.balance || 0) + ' руб.';
     infoRegDate.textContent = user.registrationDate || new Date().toLocaleString();
-    infoDiscord.textContent = user.discordId || 'Не привязан';
     
     // Обновляем счетчик серверов
     const userServers = JSON.parse(localStorage.getItem('userServers') || '[]');
@@ -118,7 +149,7 @@ function updateDashboardInfo(user) {
 
 // Регистрация пользователя
 function registerUser(login, email, password) {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const users = getUsers();
     
     const newUser = {
         id: generateUserId(),
@@ -127,27 +158,29 @@ function registerUser(login, email, password) {
         password: password,
         role: 'Пользователь',
         balance: 0,
-        registrationDate: new Date().toLocaleString(),
-        discordId: generateDiscordId(),
-        referralCode: 'REF' + generateUserId()
+        registrationDate: new Date().toLocaleString()
     };
     
     users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    saveUsers(users);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
     
     return newUser;
 }
 
 // Авторизация пользователя
 function loginUser(login, password) {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const users = getUsers();
+    
+    // Ищем пользователя по email или логину
     const user = users.find(u => 
-        (u.email === login || u.login === login) && u.password === password
+        (u.email.toLowerCase() === login.toLowerCase() || 
+         u.login.toLowerCase() === login.toLowerCase()) && 
+        u.password === password
     );
     
     if (user) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
         return user;
     }
     return null;
@@ -155,7 +188,7 @@ function loginUser(login, password) {
 
 // Выход пользователя
 function logoutUser() {
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem(CURRENT_USER_KEY);
     showGuestNav();
     showMainPage();
 }
@@ -195,7 +228,7 @@ function showDashboardPage() {
     dashboardPage.style.display = 'block';
     document.title = 'Панель управления - Gamely';
     
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || '{}');
     updateDashboardInfo(currentUser);
 }
 
@@ -212,7 +245,7 @@ loginLink.addEventListener('click', function(e) {
 
 createServerBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    const currentUser = localStorage.getItem('currentUser');
+    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
     if (currentUser) {
         showDashboardPage();
     } else {
@@ -222,7 +255,7 @@ createServerBtn.addEventListener('click', function(e) {
 
 heroCreateBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    const currentUser = localStorage.getItem('currentUser');
+    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
     if (currentUser) {
         showDashboardPage();
     } else {
@@ -266,7 +299,7 @@ dashboardLogoutBtn.addEventListener('click', function(e) {
 regEmail.addEventListener('blur', function() {
     const email = this.value.trim();
     if (email && isEmailExists(email)) {
-        const user = JSON.parse(localStorage.getItem('users') || '[]').find(u => u.email === email);
+        const user = getUserByEmail(email);
         emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
         emailError.style.display = 'block';
     } else {
@@ -287,7 +320,7 @@ regLogin.addEventListener('blur', function() {
 regConfirmPassword.addEventListener('blur', function() {
     const password = regPassword.value;
     const confirmPassword = this.value;
-    if (password !== confirmPassword) {
+    if (password && confirmPassword && password !== confirmPassword) {
         passwordError.textContent = 'Пароли не совпадают';
         passwordError.style.display = 'block';
     } else {
@@ -302,6 +335,11 @@ authForm.addEventListener('submit', function(e) {
     const login = authLogin.value.trim();
     const password = authPassword.value;
     
+    if (!login || !password) {
+        alert('Заполните все поля!');
+        return;
+    }
+    
     const submitBtn = this.querySelector('.auth-submit');
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
     submitBtn.disabled = true;
@@ -311,14 +349,15 @@ authForm.addEventListener('submit', function(e) {
         if (user) {
             showUserNav(user.login);
             showMainPage();
+            alert(`Добро пожаловать, ${user.login}!`);
         } else {
-            alert('Неверный логин или пароль!');
+            alert('Неверный логин/email или пароль! Попробуйте:\nЛогин: demo\nПароль: 123456');
         }
         
         authForm.reset();
         submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
         submitBtn.disabled = false;
-    }, 1500);
+    }, 1000);
 });
 
 // Обработка формы регистрации
@@ -330,21 +369,37 @@ registerForm.addEventListener('submit', function(e) {
     const password = regPassword.value;
     const confirmPassword = regConfirmPassword.value;
     
-    // Проверки
+    // Проверки заполненности
+    if (!email || !login || !password || !confirmPassword) {
+        alert('Заполните все поля!');
+        return;
+    }
+    
+    // Проверка email
     if (isEmailExists(email)) {
-        emailError.textContent = `Эта почта зарегистрирована с логином: ${JSON.parse(localStorage.getItem('users') || '[]').find(u => u.email === email).login}`;
+        const user = getUserByEmail(email);
+        emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
         emailError.style.display = 'block';
         return;
     }
     
+    // Проверка логина
     if (isLoginExists(login)) {
         loginError.textContent = 'Этот логин занят';
         loginError.style.display = 'block';
         return;
     }
     
+    // Проверка паролей
     if (password !== confirmPassword) {
         passwordError.textContent = 'Пароли не совпадают';
+        passwordError.style.display = 'block';
+        return;
+    }
+    
+    // Проверка длины пароля
+    if (password.length < 6) {
+        passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
         passwordError.style.display = 'block';
         return;
     }
@@ -354,13 +409,19 @@ registerForm.addEventListener('submit', function(e) {
     submitBtn.disabled = true;
     
     setTimeout(() => {
-        const newUser = registerUser(login, email, password);
-        showUserNav(newUser.login);
-        showMainPage();
-        registerForm.reset();
+        try {
+            const newUser = registerUser(login, email, password);
+            showUserNav(newUser.login);
+            showMainPage();
+            registerForm.reset();
+            alert(`Регистрация успешна! Добро пожаловать, ${newUser.login}!`);
+        } catch (error) {
+            alert('Ошибка регистрации: ' + error.message);
+        }
+        
         submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
         submitBtn.disabled = false;
-    }, 1500);
+    }, 1000);
 });
 
 // Действия в панели управления
@@ -372,9 +433,20 @@ createServerDashboardBtn.addEventListener('click', function() {
     alert('Переход к созданию сервера...');
 });
 
+// Информация для разработчика (можно удалить в продакшене)
+function showDevInfo() {
+    console.log('=== Gamely Dev Info ===');
+    console.log('Демо пользователь:');
+    console.log('Логин: demo');
+    console.log('Пароль: 123456');
+    console.log('Email: demo@example.com');
+    console.log('=====================');
+}
+
 // Плавное появление элементов при загрузке
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
+    showDevInfo(); // Показываем информацию для разработчика
     
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {

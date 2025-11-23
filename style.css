@@ -344,6 +344,12 @@ header {
     color: #8b5ceb;
 }
 
+/* Маленькая кнопка */
+.small-btn {
+    padding: 0.7rem 1.5rem !important;
+    font-size: 0.9rem !important;
+}
+
 /* Секция преимуществ */
 .features-section {
     padding: 100px 2rem;
@@ -764,16 +770,6 @@ header {
     text-align: right;
 }
 
-.show-code {
-    color: #8b5ceb;
-    text-decoration: none;
-    font-size: 0.9rem;
-}
-
-.show-code:hover {
-    text-decoration: underline;
-}
-
 .actions-list {
     display: flex;
     flex-direction: column;
@@ -840,19 +836,19 @@ header {
 
 .no-servers {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 2rem;
     color: #c4b5fd;
 }
 
 .no-servers i {
-    font-size: 4rem;
+    font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
 }
 
 .no-servers p {
-    margin-bottom: 2rem;
-    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
 }
 
 /* Анимации */
