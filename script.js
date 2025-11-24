@@ -80,6 +80,9 @@ const DEMO_USER = {
     registrationDate: '18.11.2023 22:40:54'
 };
 
+// Состояние приложения
+let currentPage = 'main';
+
 // Инициализация базы данных
 async function initUsersDatabase() {
     try {
@@ -160,7 +163,6 @@ async function checkAuth() {
     const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
     if (currentUser) {
         showUserNav(currentUser.login);
-        updateDashboardInfo(currentUser);
     } else {
         showGuestNav();
     }
@@ -247,66 +249,74 @@ async function loginUser(login, password) {
 function logoutUser() {
     localStorage.removeItem(CURRENT_USER_KEY);
     showGuestNav();
-    showMainPage();
+    navigateTo('main');
 }
 
-// Показать главную страницу
-function showMainPage() {
-    mainPage.style.display = 'block';
-    authPage.style.display = 'none';
-    registerPage.style.display = 'none';
-    dashboardPage.style.display = 'none';
-    document.title = 'Gamely - Бесплатный игровой хостинг';
-}
-
-// Показать страницу авторизации
-function showAuthPage() {
-    mainPage.style.display = 'none';
-    authPage.style.display = 'block';
-    registerPage.style.display = 'none';
-    dashboardPage.style.display = 'none';
-    document.title = 'Авторизация - Gamely';
-}
-
-// Показать страницу регистрации
-function showRegisterPage() {
-    mainPage.style.display = 'none';
-    authPage.style.display = 'none';
-    registerPage.style.display = 'block';
-    dashboardPage.style.display = 'none';
-    document.title = 'Регистрация - Gamely';
-}
-
-// Показать панель управления
-function showDashboardPage() {
+// Функция навигации с History API
+function navigateTo(page, addToHistory = true) {
+    // Скрываем все страницы
     mainPage.style.display = 'none';
     authPage.style.display = 'none';
     registerPage.style.display = 'none';
-    dashboardPage.style.display = 'block';
-    document.title = 'Панель управления - Gamely';
+    dashboardPage.style.display = 'none';
     
-    const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || '{}');
-    updateDashboardInfo(currentUser);
+    // Показываем нужную страницу
+    switch(page) {
+        case 'main':
+            mainPage.style.display = 'block';
+            document.title = 'Gamely - Бесплатный игровой хостинг';
+            break;
+        case 'auth':
+            authPage.style.display = 'block';
+            document.title = 'Авторизация - Gamely';
+            break;
+        case 'register':
+            registerPage.style.display = 'block';
+            document.title = 'Регистрация - Gamely';
+            break;
+        case 'dashboard':
+            dashboardPage.style.display = 'block';
+            document.title = 'Панель управления - Gamely';
+            const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || '{}');
+            updateDashboardInfo(currentUser);
+            break;
+    }
+    
+    currentPage = page;
+    
+    // Добавляем в историю браузера
+    if (addToHistory) {
+        history.pushState({ page: page }, '', `#${page}`);
+    }
+}
+
+// Обработчик кнопки "Назад"
+function handlePopState(event) {
+    if (event.state && event.state.page) {
+        navigateTo(event.state.page, false);
+    } else {
+        navigateTo('main', false);
+    }
 }
 
 // Обработчики навигации
 homeLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showMainPage();
+    navigateTo('main');
 });
 
 loginLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showAuthPage();
+    navigateTo('auth');
 });
 
 createServerBtn.addEventListener('click', function(e) {
     e.preventDefault();
     const currentUser = localStorage.getItem(CURRENT_USER_KEY);
     if (currentUser) {
-        showDashboardPage();
+        navigateTo('dashboard');
     } else {
-        showAuthPage();
+        navigateTo('auth');
     }
 });
 
@@ -314,31 +324,31 @@ heroCreateBtn.addEventListener('click', function(e) {
     e.preventDefault();
     const currentUser = localStorage.getItem(CURRENT_USER_KEY);
     if (currentUser) {
-        showDashboardPage();
+        navigateTo('dashboard');
     } else {
-        showAuthPage();
+        navigateTo('auth');
     }
 });
 
 dashboardLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showDashboardPage();
+    navigateTo('dashboard');
 });
 
 dashboardHomeLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showMainPage();
+    navigateTo('main');
 });
 
 // Переключение между авторизацией и регистрацией
 showRegisterLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showRegisterPage();
+    navigateTo('register');
 });
 
 showLoginLink.addEventListener('click', function(e) {
     e.preventDefault();
-    showAuthPage();
+    navigateTo('auth');
 });
 
 // Выход из аккаунта
@@ -405,7 +415,7 @@ authForm.addEventListener('submit', async function(e) {
         const user = await loginUser(login, password);
         if (user) {
             showUserNav(user.login);
-            showMainPage();
+            navigateTo('main');
             alert(`Добро пожаловать, ${user.login}!`);
         } else {
             alert('Неверный логин/email или пароль! Попробуйте:\nЛогин: demo\nПароль: 123456');
@@ -478,9 +488,10 @@ registerForm.addEventListener('submit', async function(e) {
         
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
         
+        // Быстрая регистрация без задержки
         const newUser = await registerUser(login, email, password);
         showUserNav(newUser.login);
-        showMainPage();
+        navigateTo('main');
         registerForm.reset();
         alert(`Регистрация успешна! Добро пожаловать, ${newUser.login}!`);
         
@@ -515,6 +526,17 @@ function showDevInfo() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     showDevInfo();
+    
+    // Обработчик кнопки "Назад"
+    window.addEventListener('popstate', handlePopState);
+    
+    // Проверяем hash в URL при загрузке
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['main', 'auth', 'register', 'dashboard'].includes(hash)) {
+        navigateTo(hash, false);
+    } else {
+        navigateTo('main', true);
+    }
     
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {
@@ -595,6 +617,3 @@ function createParticles() {
 
 // Запускаем частицы после загрузки
 window.addEventListener('load', createParticles);
-
-// Показываем главную страницу по умолчанию
-showMainPage();
