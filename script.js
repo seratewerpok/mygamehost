@@ -3,6 +3,8 @@ const mainPage = document.getElementById('mainPage');
 const authPage = document.getElementById('authPage');
 const registerPage = document.getElementById('registerPage');
 const dashboardPage = document.getElementById('dashboardPage');
+
+// Навигация
 const homeLink = document.getElementById('homeLink');
 const loginLink = document.getElementById('loginLink');
 const createServerBtn = document.getElementById('createServerBtn');
@@ -17,12 +19,16 @@ const dashboardLogoutBtn = document.getElementById('dashboardLogoutBtn');
 const createServerDashboardBtn = document.getElementById('createServerDashboardBtn');
 const depositBtn = document.getElementById('depositBtn');
 
+// Кнопки Google
+const googleAuthBtn = document.getElementById('googleAuthBtn');
+const googleRegisterBtn = document.getElementById('googleRegisterBtn');
+
 // Навигационные блоки
 const guestNav = document.getElementById('guestNav');
 const userNav = document.getElementById('userNav');
 const usernameSpan = document.getElementById('username');
 
-// Элементы панели управления
+// Панель управления
 const infoId = document.getElementById('infoId');
 const infoLogin = document.getElementById('infoLogin');
 const infoEmail = document.getElementById('infoEmail');
@@ -31,7 +37,7 @@ const infoBalance = document.getElementById('infoBalance');
 const infoRegDate = document.getElementById('infoRegDate');
 const serversCount = document.getElementById('serversCount');
 
-// Формы и поля ввода
+// Формы
 const authForm = document.getElementById('authForm');
 const registerForm = document.getElementById('registerForm');
 const authLogin = document.getElementById('authLogin');
@@ -41,12 +47,12 @@ const regLogin = document.getElementById('regLogin');
 const regPassword = document.getElementById('regPassword');
 const regConfirmPassword = document.getElementById('regConfirmPassword');
 
-// Сообщения об ошибках
+// Ошибки
 const emailError = document.getElementById('emailError');
 const loginError = document.getElementById('loginError');
 const passwordError = document.getElementById('passwordError');
 
-// Firebase конфигурация
+// Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCTc_NZlYVmxD2optGVRfZz7W-Y9ZvJRJM",
     authDomain: "gamehosting-ad7bf.firebaseapp.com",
@@ -65,11 +71,11 @@ try {
 }
 
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-// Ключи для localStorage
+// Константы
 const CURRENT_USER_KEY = 'gamely_current_user';
 
-// Демо-пользователь
 const DEMO_USER = {
     id: '98977',
     login: 'demo',
@@ -80,13 +86,9 @@ const DEMO_USER = {
     registrationDate: '18.11.2023 22:40:54'
 };
 
-// Состояние приложения
-let currentPage = 'main';
-
-// Система уведомлений
+// Уведомления
 function showNotification(type, title, message, duration = 5000) {
     const container = document.getElementById('notificationContainer');
-    
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     
@@ -110,52 +112,35 @@ function showNotification(type, title, message, duration = 5000) {
                 </button>
             </div>
             <div class="notification-message">${message}</div>
-        </div>
-    `;
+        </div>`;
     
     container.appendChild(notification);
     
-    // Анимация появления
     setTimeout(() => notification.classList.add('show'), 100);
     
-    // Закрытие по кнопке
     const closeBtn = notification.querySelector('.notification-close');
     closeBtn.addEventListener('click', () => {
-        closeNotification(notification);
+        notification.remove();
     });
     
-    // Автоматическое закрытие
     if (duration > 0) {
         setTimeout(() => {
             if (notification.parentNode) {
-                closeNotification(notification);
+                notification.remove();
             }
         }, duration);
     }
-    
-    return notification;
 }
 
-function closeNotification(notification) {
-    notification.classList.remove('show');
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 300);
-}
-
-// Функция для создания кнопки показа пароля
+// Кнопка показа пароля
 function createPasswordToggle(inputId) {
     const input = document.getElementById(inputId);
     const container = document.createElement('div');
     container.className = 'password-input-container';
     
-    // Обертываем input в контейнер
     input.parentNode.insertBefore(container, input);
     container.appendChild(input);
     
-    // Создаем кнопку показа/скрытия пароля
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'toggle-password';
@@ -170,14 +155,11 @@ function createPasswordToggle(inputId) {
     container.appendChild(toggleBtn);
 }
 
-// Инициализация базы данных
+// База данных
 async function initUsersDatabase() {
     try {
-        // Проверяем, есть ли демо-пользователь в базе
         const demoUserDoc = await db.collection('users').doc(DEMO_USER.id).get();
-        
         if (!demoUserDoc.exists) {
-            // Создаем демо-пользователя
             await db.collection('users').doc(DEMO_USER.id).set(DEMO_USER);
             console.log('Демо-пользователь создан');
         }
@@ -186,25 +168,13 @@ async function initUsersDatabase() {
     }
 }
 
-// Получить пользователя по ID
-async function getUserById(userId) {
-    try {
-        const userDoc = await db.collection('users').doc(userId).get();
-        return userDoc.exists ? userDoc.data() : null;
-    } catch (error) {
-        console.error('Ошибка получения пользователя:', error);
-        return null;
-    }
-}
-
-// Получить пользователя по email
+// Работа с пользователями
 async function getUserByEmail(email) {
     try {
         const snapshot = await db.collection('users')
             .where('email', '==', email.toLowerCase())
             .limit(1)
             .get();
-        
         return snapshot.empty ? null : snapshot.docs[0].data();
     } catch (error) {
         console.error('Ошибка поиска по email:', error);
@@ -212,14 +182,12 @@ async function getUserByEmail(email) {
     }
 }
 
-// Получить пользователя по логину
 async function getUserByLogin(login) {
     try {
         const snapshot = await db.collection('users')
             .where('login', '==', login.toLowerCase())
             .limit(1)
             .get();
-        
         return snapshot.empty ? null : snapshot.docs[0].data();
     } catch (error) {
         console.error('Ошибка поиска по логину:', error);
@@ -227,24 +195,21 @@ async function getUserByLogin(login) {
     }
 }
 
-// Проверка существования email
 async function isEmailExists(email) {
     const user = await getUserByEmail(email);
     return user !== null;
 }
 
-// Проверка существования логина
 async function isLoginExists(login) {
     const user = await getUserByLogin(login);
     return user !== null;
 }
 
-// Генерация ID пользователя
 function generateUserId() {
     return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
-// Проверка авторизации при загрузке
+// Авторизация
 async function checkAuth() {
     await initUsersDatabase();
     const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
@@ -255,20 +220,17 @@ async function checkAuth() {
     }
 }
 
-// Показать навигацию для гостя
 function showGuestNav() {
     guestNav.style.display = 'flex';
     userNav.style.display = 'none';
 }
 
-// Показать навигацию для пользователя
 function showUserNav(username) {
     guestNav.style.display = 'none';
     userNav.style.display = 'flex';
     usernameSpan.textContent = username;
 }
 
-// Обновить информацию в панели управления
 function updateDashboardInfo(user) {
     infoId.textContent = user.id || '---';
     infoLogin.textContent = user.login || '---';
@@ -277,60 +239,44 @@ function updateDashboardInfo(user) {
     infoBalance.textContent = (user.balance || 0) + ' руб.';
     infoRegDate.textContent = user.registrationDate || new Date().toLocaleString();
     
-    // Обновляем счетчик серверов
     const userServers = JSON.parse(localStorage.getItem('userServers') || '[]');
     serversCount.textContent = userServers.length;
 }
 
-// Регистрация пользователя - УПРОЩЕННАЯ ВЕРСИЯ
+// Регистрация пользователя
 async function registerUser(login, email, password) {
-    return new Promise((resolve, reject) => {
-        try {
-            const newUser = {
-                id: generateUserId(),
-                login: login,
-                email: email.toLowerCase(),
-                password: password,
-                role: 'Пользователь',
-                balance: 0,
-                registrationDate: new Date().toLocaleString()
-            };
-            
-            // Сохраняем в Firebase
-            db.collection('users').doc(newUser.id).set(newUser)
-                .then(() => {
-                    // Сохраняем в localStorage для авторизации
-                    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-                    resolve(newUser);
-                })
-                .catch(error => {
-                    console.error('Ошибка сохранения в Firebase:', error);
-                    reject(new Error('Ошибка при создании пользователя в базе данных'));
-                });
-        } catch (error) {
-            console.error('Ошибка регистрации:', error);
-            reject(new Error('Ошибка при создании пользователя'));
-        }
-    });
+    const newUser = {
+        id: generateUserId(),
+        login: login,
+        email: email.toLowerCase(),
+        password: password,
+        role: 'Пользователь',
+        balance: 0,
+        registrationDate: new Date().toLocaleString('ru-RU')
+    };
+    
+    try {
+        await db.collection('users').doc(newUser.id).set(newUser);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
+        return newUser;
+    } catch (error) {
+        console.error('Ошибка регистрации:', error);
+        throw new Error('Ошибка при создании пользователя');
+    }
 }
 
 // Авторизация пользователя
 async function loginUser(login, password) {
     try {
-        // Ищем по логину
         let user = await getUserByLogin(login);
-        
-        // Если не нашли по логину, ищем по email
         if (!user) {
             user = await getUserByEmail(login);
         }
         
-        // Проверяем пароль
         if (user && user.password === password) {
             localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
             return user;
         }
-        
         return null;
     } catch (error) {
         console.error('Ошибка авторизации:', error);
@@ -338,7 +284,70 @@ async function loginUser(login, password) {
     }
 }
 
-// Выход пользователя
+// Вход через Google
+async function signInWithGoogle() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        console.log('Google user:', user);
+        
+        // Проверяем, есть ли пользователь в нашей базе
+        let existingUser = await getUserByEmail(user.email);
+        
+        if (!existingUser) {
+            // Создаем нового пользователя
+            existingUser = {
+                id: user.uid, // Используем UID от Google
+                login: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                password: 'google_oauth',
+                role: 'Пользователь',
+                balance: 0,
+                registrationDate: new Date().toLocaleString('ru-RU'),
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            };
+            
+            await db.collection('users').doc(existingUser.id).set(existingUser);
+            console.log('Новый пользователь создан через Google');
+        }
+        
+        // Сохраняем в localStorage
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(existingUser));
+        
+        return existingUser;
+        
+    } catch (error) {
+        console.error('Ошибка входа через Google:', error);
+        
+        // Детальные ошибки для отладки
+        let errorMessage = 'Не удалось войти через Google';
+        
+        switch(error.code) {
+            case 'auth/popup-blocked':
+                errorMessage = 'Всплывающее окно было заблокировано браузером';
+                break;
+            case 'auth/popup-closed-by-user':
+                errorMessage = 'Вы закрыли окно авторизации';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage = 'Проблемы с интернет-соединением';
+                break;
+            case 'auth/unauthorized-domain':
+                errorMessage = 'Домен не авторизован. Проверь настройки Firebase';
+                break;
+        }
+        
+        throw new Error(errorMessage);
+    }
+}
+
+// Выход
 function logoutUser() {
     localStorage.removeItem(CURRENT_USER_KEY);
     showGuestNav();
@@ -346,15 +355,13 @@ function logoutUser() {
     showNotification('info', 'Выход', 'Вы успешно вышли из аккаунта');
 }
 
-// Функция навигации с History API
+// Навигация
 function navigateTo(page, addToHistory = true) {
-    // Скрываем все страницы
     mainPage.style.display = 'none';
     authPage.style.display = 'none';
     registerPage.style.display = 'none';
     dashboardPage.style.display = 'none';
     
-    // Показываем нужную страницу
     switch(page) {
         case 'main':
             mainPage.style.display = 'block';
@@ -376,15 +383,12 @@ function navigateTo(page, addToHistory = true) {
             break;
     }
     
-    currentPage = page;
-    
-    // Добавляем в историю браузера
     if (addToHistory) {
         history.pushState({ page: page }, '', `#${page}`);
     }
 }
 
-// Обработчик кнопки "Назад"
+// Обработчик назад
 function handlePopState(event) {
     if (event.state && event.state.page) {
         navigateTo(event.state.page, false);
@@ -393,70 +397,125 @@ function handlePopState(event) {
     }
 }
 
-// Обработчики навигации
-homeLink.addEventListener('click', function(e) {
+// Навигационные обработчики
+homeLink.addEventListener('click', (e) => {
     e.preventDefault();
     navigateTo('main');
 });
 
-loginLink.addEventListener('click', function(e) {
+loginLink.addEventListener('click', (e) => {
     e.preventDefault();
     navigateTo('auth');
 });
 
-createServerBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
-    if (currentUser) {
-        navigateTo('dashboard');
-    } else {
-        navigateTo('auth');
-    }
-});
-
-heroCreateBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
-    if (currentUser) {
-        navigateTo('dashboard');
-    } else {
-        navigateTo('auth');
-    }
-});
-
-dashboardLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    navigateTo('dashboard');
-});
-
-dashboardHomeLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    navigateTo('main');
-});
-
-// Переключение между авторизацией и регистрацией
-showRegisterLink.addEventListener('click', function(e) {
+showRegisterLink.addEventListener('click', (e) => {
     e.preventDefault();
     navigateTo('register');
 });
 
-showLoginLink.addEventListener('click', function(e) {
+showLoginLink.addEventListener('click', (e) => {
     e.preventDefault();
     navigateTo('auth');
 });
 
-// Выход из аккаунта
-logoutLink.addEventListener('click', function(e) {
+logoutLink.addEventListener('click', (e) => {
     e.preventDefault();
     logoutUser();
 });
 
-dashboardLogoutBtn.addEventListener('click', function(e) {
+dashboardLogoutBtn.addEventListener('click', (e) => {
     e.preventDefault();
     logoutUser();
 });
 
-// Валидация формы регистрации
+dashboardLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('dashboard');
+});
+
+dashboardHomeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('main');
+});
+
+createServerBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
+    if (currentUser) {
+        navigateTo('dashboard');
+    } else {
+        navigateTo('auth');
+    }
+});
+
+heroCreateBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
+    if (currentUser) {
+        navigateTo('dashboard');
+    } else {
+        navigateTo('auth');
+    }
+});
+
+createServerDashboardBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showNotification('info', 'Создание сервера', 'Функция создания сервера скоро будет доступна');
+});
+
+depositBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showNotification('info', 'Пополнение баланса', 'Функция пополнения баланса скоро будет доступна');
+});
+
+// Кнопки Google
+googleAuthBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    const btn = googleAuthBtn;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход через Google...';
+    btn.disabled = true;
+    
+    try {
+        const user = await signInWithGoogle();
+        showUserNav(user.login);
+        navigateTo('main');
+        showNotification('success', 'Успешный вход!', `Добро пожаловать, ${user.login}!`);
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('error', 'Ошибка входа', error.message);
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+});
+
+googleRegisterBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    const btn = googleRegisterBtn;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация через Google...';
+    btn.disabled = true;
+    
+    try {
+        const user = await signInWithGoogle();
+        showUserNav(user.login);
+        navigateTo('main');
+        showNotification('success', 'Регистрация успешна!', `Добро пожаловать, ${user.login}!`);
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('error', 'Ошибка регистрации', error.message);
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+});
+
+// Валидация регистрации
 regEmail.addEventListener('blur', async function() {
     const email = this.value.trim();
     if (email && await isEmailExists(email)) {
@@ -489,7 +548,78 @@ regConfirmPassword.addEventListener('blur', function() {
     }
 });
 
-// Обработка формы авторизации
+// Форма регистрации
+registerForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const email = regEmail.value.trim();
+    const login = regLogin.value.trim();
+    const password = regPassword.value;
+    const confirmPassword = regConfirmPassword.value;
+    
+    if (!email || !login || !password || !confirmPassword) {
+        showNotification('warning', 'Заполните все поля', 'Пожалуйста, заполните все поля формы');
+        return;
+    }
+    
+    const submitBtn = this.querySelector('.auth-submit');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Быстрые проверки
+        if (await isEmailExists(email)) {
+            showNotification('warning', 'Email занят', 'Этот email уже используется');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        if (await isLoginExists(login)) {
+            showNotification('warning', 'Логин занят', 'Этот логин уже используется');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showNotification('warning', 'Пароли не совпадают', 'Проверьте правильность ввода пароля');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        if (password.length < 6) {
+            showNotification('warning', 'Слабый пароль', 'Пароль должен быть не менее 6 символов');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // РЕГИСТРАЦИЯ
+        const newUser = await registerUser(login, email, password);
+        
+        // УСПЕХ - сбрасываем форму и переходим
+        registerForm.reset();
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        // ПОСЛЕ РЕГИСТРАЦИИ ДЕЛАЕМ ТОЧНО ТАК ЖЕ КАК ПОСЛЕ АВТОРИЗАЦИИ
+        showUserNav(newUser.login);
+        navigateTo('main');
+        showNotification('success', 'Регистрация успешна!', `Добро пожаловать, ${newUser.login}!`);
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        showNotification('error', 'Ошибка регистрации', 'Произошла ошибка при регистрации');
+    }
+});
+
+// Форма авторизации
 authForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -503,6 +633,7 @@ authForm.addEventListener('submit', async function(e) {
     
     const submitBtn = this.querySelector('.auth-submit');
     const originalText = submitBtn.innerHTML;
+    
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
     submitBtn.disabled = true;
     
@@ -513,141 +644,26 @@ authForm.addEventListener('submit', async function(e) {
             navigateTo('main');
             showNotification('success', 'Добро пожаловать!', `Рады видеть вас снова, ${user.login}!`);
         } else {
-            showNotification('error', 'Ошибка входа', 'Неверный логин/email или пароль. Проверьте правильность введенных данных.');
+            showNotification('error', 'Ошибка входа', 'Неверный логин/email или пароль');
         }
     } catch (error) {
-        showNotification('error', 'Ошибка авторизации', error.message);
+        showNotification('error', 'Ошибка авторизации', 'Произошла ошибка при входе');
     }
     
-    authForm.reset();
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
 });
 
-// Обработка формы регистрации - ПОЛНОСТЬЮ ПЕРЕПИСАННАЯ
-registerForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const email = regEmail.value.trim();
-    const login = regLogin.value.trim();
-    const password = regPassword.value;
-    const confirmPassword = regConfirmPassword.value;
-    
-    // Проверки заполненности
-    if (!email || !login || !password || !confirmPassword) {
-        showNotification('warning', 'Заполните все поля', 'Пожалуйста, заполните все поля формы');
-        return;
-    }
-    
-    const submitBtn = this.querySelector('.auth-submit');
-    const originalText = submitBtn.innerHTML;
-    
-    // Функция для сброса кнопки
-    const resetButton = () => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    };
-    
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
-    submitBtn.disabled = true;
-    
-    try {
-        // Проверка email
-        if (await isEmailExists(email)) {
-            const user = await getUserByEmail(email);
-            emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
-            emailError.style.display = 'block';
-            resetButton();
-            showNotification('warning', 'Email уже используется', 'Этот email уже зарегистрирован в системе');
-            return;
-        }
-        
-        // Проверка логина
-        if (await isLoginExists(login)) {
-            loginError.textContent = 'Этот логин занят';
-            loginError.style.display = 'block';
-            resetButton();
-            showNotification('warning', 'Логин занят', 'Этот логин уже используется другим пользователем');
-            return;
-        }
-        
-        // Проверка паролей
-        if (password !== confirmPassword) {
-            passwordError.textContent = 'Пароли не совпадают';
-            passwordError.style.display = 'block';
-            resetButton();
-            showNotification('warning', 'Пароли не совпадают', 'Убедитесь, что пароли в обоих полях одинаковые');
-            return;
-        }
-        
-        // Проверка длины пароля
-        if (password.length < 6) {
-            passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
-            passwordError.style.display = 'block';
-            resetButton();
-            showNotification('warning', 'Слабый пароль', 'Пароль должен содержать минимум 6 символов');
-            return;
-        }
-        
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
-        
-        // Регистрация пользователя с таймаутом
-        const registrationPromise = registerUser(login, email, password);
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Таймаут регистрации')), 10000)
-        );
-        
-        const newUser = await Promise.race([registrationPromise, timeoutPromise]);
-        
-        // УСПЕШНАЯ РЕГИСТРАЦИЯ
-        registerForm.reset();
-        resetButton();
-        
-        showUserNav(newUser.login);
-        navigateTo('main');
-        showNotification('success', 'Регистрация успешна!', `Добро пожаловать в Gamely, ${newUser.login}! Теперь вы можете создать свой первый сервер.`);
-        
-    } catch (error) {
-        // ОШИБКА РЕГИСТРАЦИИ
-        console.error('Ошибка регистрации:', error);
-        resetButton();
-        showNotification('error', 'Ошибка регистрации', error.message || 'Произошла неизвестная ошибка при регистрации');
-    }
-});
-
-// Действия в панели управления
-depositBtn.addEventListener('click', function() {
-    showNotification('info', 'Пополнение баланса', 'Функция пополнения баланса скоро будет доступна');
-});
-
-createServerDashboardBtn.addEventListener('click', function() {
-    showNotification('info', 'Создание сервера', 'Функция создания сервера скоро будет доступна');
-});
-
-// Информация для разработчика
-function showDevInfo() {
-    console.log('=== Gamely Dev Info ===');
-    console.log('Демо пользователь:');
-    console.log('Логин: demo');
-    console.log('Пароль: 123456');
-    console.log('Email: demo@example.com');
-    console.log('=====================');
-}
-
-// Плавное появление элементов при загрузке
+// Загрузка страницы
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    showDevInfo();
     
-    // Инициализация кнопок показа пароля
     createPasswordToggle('authPassword');
     createPasswordToggle('regPassword');
     createPasswordToggle('regConfirmPassword');
     
-    // Обработчик кнопки "Назад"
     window.addEventListener('popstate', handlePopState);
     
-    // Проверяем hash в URL при загрузке
     const hash = window.location.hash.replace('#', '');
     if (hash && ['main', 'auth', 'register', 'dashboard'].includes(hash)) {
         navigateTo(hash, false);
@@ -655,6 +671,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navigateTo('main', true);
     }
     
+    // Анимации
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {
         heroContent.style.opacity = '0';
@@ -666,36 +683,10 @@ document.addEventListener('DOMContentLoaded', function() {
             heroContent.style.transform = 'translateY(0)';
         }, 300);
     }
-    
-    // Анимация появления карточек преимуществ
-    const featureCards = document.querySelectorAll('.feature-card');
-    featureCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-            card.style.transition = `all 0.6s ease ${index * 0.1}s`;
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, 500 + index * 100);
-    });
-    
-    // Анимация появления отзывов
-    const reviewCards = document.querySelectorAll('.review-card');
-    reviewCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-            card.style.transition = `all 0.6s ease ${index * 0.1}s`;
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, 800 + index * 100);
-    });
 });
 
-// Добавляем эффект частиц для фона
-function createParticles() {
+// Частицы
+window.addEventListener('load', function() {
     const heroBanner = document.querySelector('.hero-banner');
     if (!heroBanner) return;
     
@@ -730,7 +721,4 @@ function createParticles() {
         
         particlesContainer.appendChild(particle);
     }
-}
-
-// Запускаем частицы после загрузки
-window.addEventListener('load', createParticles);
+});

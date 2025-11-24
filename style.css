@@ -35,7 +35,6 @@ header {
     padding: 0 2rem;
 }
 
-/* Логотип */
 .logo {
     display: flex;
     align-items: center;
@@ -58,7 +57,6 @@ header {
     font-weight: 800;
 }
 
-/* Навигация */
 .nav-section {
     display: flex;
     align-items: center;
@@ -83,7 +81,6 @@ header {
     transform: translateY(-1px);
 }
 
-/* Выпадающее меню помощи */
 .nav-dropdown {
     position: relative;
 }
@@ -121,7 +118,6 @@ header {
     display: block;
 }
 
-/* Кнопки */
 .create-server-btn {
     background: linear-gradient(135deg, #8b5ceb 0%, #6d28d9 100%);
     color: white;
@@ -154,7 +150,6 @@ header {
     color: white;
 }
 
-/* Навигация для пользователей */
 .guest-nav {
     display: flex;
     align-items: center;
@@ -234,7 +229,6 @@ header {
     margin: 0.5rem 0;
 }
 
-/* Главная страница */
 .main-page {
     display: block;
 }
@@ -245,7 +239,6 @@ header {
     padding-top: 80px;
 }
 
-/* Герой-баннер */
 .hero-banner {
     position: relative;
     min-height: 100vh;
@@ -297,7 +290,6 @@ header {
     z-index: 1;
 }
 
-/* Кнопки героя */
 .hero-buttons {
     display: flex;
     gap: 1rem;
@@ -344,13 +336,11 @@ header {
     color: #8b5ceb;
 }
 
-/* Маленькая кнопка */
 .small-btn {
     padding: 0.7rem 1.5rem !important;
     font-size: 0.9rem !important;
 }
 
-/* Секция преимуществ */
 .features-section {
     padding: 100px 2rem;
     background: rgba(10, 10, 20, 0.8);
@@ -446,7 +436,6 @@ header {
     font-size: 1rem;
 }
 
-/* Секция отзывов */
 .reviews-section {
     padding: 100px 2rem;
     background: rgba(15, 15, 25, 0.8);
@@ -537,7 +526,6 @@ header {
     font-size: 0.8rem;
 }
 
-/* Страница авторизации */
 .auth-container {
     display: flex;
     align-items: center;
@@ -574,7 +562,6 @@ header {
     opacity: 0.8;
 }
 
-/* Форма авторизации */
 .auth-form {
     display: flex;
     flex-direction: column;
@@ -616,7 +603,6 @@ header {
     display: none;
 }
 
-/* Кнопка показа пароля */
 .password-input-container {
     position: relative;
 }
@@ -640,7 +626,6 @@ header {
     background: rgba(139, 92, 235, 0.1);
 }
 
-/* Кнопка входа */
 .auth-submit {
     width: 100%;
     padding: 1rem;
@@ -668,40 +653,79 @@ header {
     text-decoration: underline;
 }
 
-/* Преимущества регистрации */
-.register-features {
-    background: rgba(139, 92, 235, 0.05);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
+/* Социальная авторизация */
+.social-auth {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #333;
 }
 
-.register-features h4 {
-    color: #8b5ceb;
-    margin-bottom: 0.5rem;
-}
-
-.register-features ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.register-features li {
+.social-divider {
+    text-align: center;
+    margin-bottom: 1rem;
     color: #c4b5fd;
-    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    position: relative;
+    padding: 0 20px;
+}
+
+.social-divider::before,
+.social-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: #333;
+}
+
+.social-divider::before {
+    left: 0;
+}
+
+.social-divider::after {
+    right: 0;
+}
+
+.social-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.social-btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.register-features li::before {
-    content: "✓";
-    color: #8b5ceb;
-    font-weight: bold;
+.social-btn:hover {
+    background: rgba(139, 92, 235, 0.1);
+    border-color: #8b5ceb;
+    transform: translateY(-1px);
 }
 
-/* Панель управления */
+.google-btn {
+    border-color: #db4437;
+    color: #db4437;
+}
+
+.google-btn:hover {
+    background: rgba(219, 68, 55, 0.1);
+    border-color: #db4437;
+    color: #ff6b6b;
+}
+
 .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -875,13 +899,11 @@ header {
     font-size: 1rem;
 }
 
-/* Анимации */
 @keyframes float {
     0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
     50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
 }
 
-/* Универсальная система уведомлений */
 .notification {
     position: fixed;
     top: 20px;
@@ -945,7 +967,6 @@ header {
     font-size: 0.95rem;
 }
 
-/* Типы уведомлений */
 .notification.success {
     border-left-color: #10b981;
 }
@@ -978,7 +999,6 @@ header {
     color: #3b82f6;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
     .header-container {
         flex-direction: column;
@@ -1092,6 +1112,11 @@ header {
         left: 10px;
         max-width: none;
     }
+    
+    .social-divider::before,
+    .social-divider::after {
+        width: 25%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1133,5 +1158,10 @@ header {
     
     .auth-card {
         padding: 1.5rem;
+    }
+    
+    .social-divider::before,
+    .social-divider::after {
+        width: 20%;
     }
 }
