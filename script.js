@@ -46,61 +46,107 @@ const emailError = document.getElementById('emailError');
 const loginError = document.getElementById('loginError');
 const passwordError = document.getElementById('passwordError');
 
+// Firebase конфигурация
+const firebaseConfig = {
+    apiKey: "AIzaSyCTc_NZlYVmxD2optGVRfZz7W-Y9ZvJRJM",
+    authDomain: "gamehosting-ad7bf.firebaseapp.com",
+    projectId: "gamehosting-ad7bf",
+    storageBucket: "gamehosting-ad7bf.firebasestorage.app",
+    messagingSenderId: "896049563682",
+    appId: "1:896049563682:web:e73597ef00bbe1bebe227b"
+};
+
+// Инициализация Firebase
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase инициализирован');
+} catch (error) {
+    console.log('Firebase уже инициализирован');
+}
+
+const db = firebase.firestore();
+
 // Ключи для localStorage
-const USERS_KEY = 'gamely_users';
 const CURRENT_USER_KEY = 'gamely_current_user';
 
-// Инициализация базы данных пользователей с демо-пользователем
-function initUsersDatabase() {
-    if (!localStorage.getItem(USERS_KEY)) {
-        const demoUsers = [
-            {
-                id: '98977',
-                login: 'demo',
-                email: 'demo@example.com',
-                password: '123456',
-                role: 'Пользователь',
-                balance: 0,
-                registrationDate: '18.11.2023 22:40:54'
-            }
-        ];
-        localStorage.setItem(USERS_KEY, JSON.stringify(demoUsers));
-        console.log('Демо-база создана. Логин: demo, Пароль: 123456');
+// Демо-пользователь
+const DEMO_USER = {
+    id: '98977',
+    login: 'demo',
+    email: 'demo@example.com',
+    password: '123456',
+    role: 'Пользователь',
+    balance: 0,
+    registrationDate: '18.11.2023 22:40:54'
+};
+
+// Инициализация базы данных
+async function initUsersDatabase() {
+    try {
+        // Проверяем, есть ли демо-пользователь в базе
+        const demoUserDoc = await db.collection('users').doc(DEMO_USER.id).get();
+        
+        if (!demoUserDoc.exists) {
+            // Создаем демо-пользователя
+            await db.collection('users').doc(DEMO_USER.id).set(DEMO_USER);
+            console.log('Демо-пользователь создан');
+        }
+    } catch (error) {
+        console.error('Ошибка инициализации базы:', error);
     }
 }
 
-// Получить всех пользователей
-function getUsers() {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-}
-
-// Сохранить пользователей
-function saveUsers(users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-// Проверка существования email
-function isEmailExists(email) {
-    const users = getUsers();
-    return users.some(user => user.email.toLowerCase() === email.toLowerCase());
-}
-
-// Проверка существования логина
-function isLoginExists(login) {
-    const users = getUsers();
-    return users.some(user => user.login.toLowerCase() === login.toLowerCase());
+// Получить пользователя по ID
+async function getUserById(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        return userDoc.exists ? userDoc.data() : null;
+    } catch (error) {
+        console.error('Ошибка получения пользователя:', error);
+        return null;
+    }
 }
 
 // Получить пользователя по email
-function getUserByEmail(email) {
-    const users = getUsers();
-    return users.find(user => user.email.toLowerCase() === email.toLowerCase());
+async function getUserByEmail(email) {
+    try {
+        const snapshot = await db.collection('users')
+            .where('email', '==', email.toLowerCase())
+            .limit(1)
+            .get();
+        
+        return snapshot.empty ? null : snapshot.docs[0].data();
+    } catch (error) {
+        console.error('Ошибка поиска по email:', error);
+        return null;
+    }
 }
 
 // Получить пользователя по логину
-function getUserByLogin(login) {
-    const users = getUsers();
-    return users.find(user => user.login.toLowerCase() === login.toLowerCase());
+async function getUserByLogin(login) {
+    try {
+        const snapshot = await db.collection('users')
+            .where('login', '==', login.toLowerCase())
+            .limit(1)
+            .get();
+        
+        return snapshot.empty ? null : snapshot.docs[0].data();
+    } catch (error) {
+        console.error('Ошибка поиска по логину:', error);
+        return null;
+    }
+}
+
+// Проверка существования email
+async function isEmailExists(email) {
+    const user = await getUserByEmail(email);
+    return user !== null;
+}
+
+// Проверка существования логина
+async function isLoginExists(login) {
+    const user = await getUserByLogin(login);
+    return user !== null;
 }
 
 // Генерация ID пользователя
@@ -109,8 +155,8 @@ function generateUserId() {
 }
 
 // Проверка авторизации при загрузке
-function checkAuth() {
-    initUsersDatabase();
+async function checkAuth() {
+    await initUsersDatabase();
     const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
     if (currentUser) {
         showUserNav(currentUser.login);
@@ -148,42 +194,53 @@ function updateDashboardInfo(user) {
 }
 
 // Регистрация пользователя
-function registerUser(login, email, password) {
-    const users = getUsers();
-    
+async function registerUser(login, email, password) {
     const newUser = {
         id: generateUserId(),
         login: login,
-        email: email,
+        email: email.toLowerCase(),
         password: password,
         role: 'Пользователь',
         balance: 0,
         registrationDate: new Date().toLocaleString()
     };
     
-    users.push(newUser);
-    saveUsers(users);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-    
-    return newUser;
+    try {
+        // Сохраняем в Firebase
+        await db.collection('users').doc(newUser.id).set(newUser);
+        
+        // Сохраняем в localStorage для авторизации
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
+        
+        return newUser;
+    } catch (error) {
+        console.error('Ошибка регистрации:', error);
+        throw new Error('Ошибка при создании пользователя');
+    }
 }
 
 // Авторизация пользователя
-function loginUser(login, password) {
-    const users = getUsers();
-    
-    // Ищем пользователя по email или логину
-    const user = users.find(u => 
-        (u.email.toLowerCase() === login.toLowerCase() || 
-         u.login.toLowerCase() === login.toLowerCase()) && 
-        u.password === password
-    );
-    
-    if (user) {
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-        return user;
+async function loginUser(login, password) {
+    try {
+        // Ищем по логину
+        let user = await getUserByLogin(login);
+        
+        // Если не нашли по логину, ищем по email
+        if (!user) {
+            user = await getUserByEmail(login);
+        }
+        
+        // Проверяем пароль
+        if (user && user.password === password) {
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+            return user;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Ошибка авторизации:', error);
+        return null;
     }
-    return null;
 }
 
 // Выход пользователя
@@ -296,10 +353,10 @@ dashboardLogoutBtn.addEventListener('click', function(e) {
 });
 
 // Валидация формы регистрации
-regEmail.addEventListener('blur', function() {
+regEmail.addEventListener('blur', async function() {
     const email = this.value.trim();
-    if (email && isEmailExists(email)) {
-        const user = getUserByEmail(email);
+    if (email && await isEmailExists(email)) {
+        const user = await getUserByEmail(email);
         emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
         emailError.style.display = 'block';
     } else {
@@ -307,9 +364,9 @@ regEmail.addEventListener('blur', function() {
     }
 });
 
-regLogin.addEventListener('blur', function() {
+regLogin.addEventListener('blur', async function() {
     const login = this.value.trim();
-    if (login && isLoginExists(login)) {
+    if (login && await isLoginExists(login)) {
         loginError.textContent = 'Этот логин занят';
         loginError.style.display = 'block';
     } else {
@@ -329,7 +386,7 @@ regConfirmPassword.addEventListener('blur', function() {
 });
 
 // Обработка формы авторизации
-authForm.addEventListener('submit', function(e) {
+authForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const login = authLogin.value.trim();
@@ -344,8 +401,8 @@ authForm.addEventListener('submit', function(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
     submitBtn.disabled = true;
     
-    setTimeout(() => {
-        const user = loginUser(login, password);
+    try {
+        const user = await loginUser(login, password);
         if (user) {
             showUserNav(user.login);
             showMainPage();
@@ -353,15 +410,17 @@ authForm.addEventListener('submit', function(e) {
         } else {
             alert('Неверный логин/email или пароль! Попробуйте:\nЛогин: demo\nПароль: 123456');
         }
-        
-        authForm.reset();
-        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
-        submitBtn.disabled = false;
-    }, 1000);
+    } catch (error) {
+        alert('Ошибка авторизации: ' + error.message);
+    }
+    
+    authForm.reset();
+    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+    submitBtn.disabled = false;
 });
 
 // Обработка формы регистрации
-registerForm.addEventListener('submit', function(e) {
+registerForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const email = regEmail.value.trim();
@@ -375,53 +434,62 @@ registerForm.addEventListener('submit', function(e) {
         return;
     }
     
-    // Проверка email
-    if (isEmailExists(email)) {
-        const user = getUserByEmail(email);
-        emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
-        emailError.style.display = 'block';
-        return;
-    }
-    
-    // Проверка логина
-    if (isLoginExists(login)) {
-        loginError.textContent = 'Этот логин занят';
-        loginError.style.display = 'block';
-        return;
-    }
-    
-    // Проверка паролей
-    if (password !== confirmPassword) {
-        passwordError.textContent = 'Пароли не совпадают';
-        passwordError.style.display = 'block';
-        return;
-    }
-    
-    // Проверка длины пароля
-    if (password.length < 6) {
-        passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
-        passwordError.style.display = 'block';
-        return;
-    }
-    
     const submitBtn = this.querySelector('.auth-submit');
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
     submitBtn.disabled = true;
     
-    setTimeout(() => {
-        try {
-            const newUser = registerUser(login, email, password);
-            showUserNav(newUser.login);
-            showMainPage();
-            registerForm.reset();
-            alert(`Регистрация успешна! Добро пожаловать, ${newUser.login}!`);
-        } catch (error) {
-            alert('Ошибка регистрации: ' + error.message);
+    try {
+        // Проверка email
+        if (await isEmailExists(email)) {
+            const user = await getUserByEmail(email);
+            emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
+            emailError.style.display = 'block';
+            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.disabled = false;
+            return;
         }
         
-        submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
-        submitBtn.disabled = false;
-    }, 1000);
+        // Проверка логина
+        if (await isLoginExists(login)) {
+            loginError.textContent = 'Этот логин занят';
+            loginError.style.display = 'block';
+            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // Проверка паролей
+        if (password !== confirmPassword) {
+            passwordError.textContent = 'Пароли не совпадают';
+            passwordError.style.display = 'block';
+            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // Проверка длины пароля
+        if (password.length < 6) {
+            passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
+            passwordError.style.display = 'block';
+            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
+        
+        const newUser = await registerUser(login, email, password);
+        showUserNav(newUser.login);
+        showMainPage();
+        registerForm.reset();
+        alert(`Регистрация успешна! Добро пожаловать, ${newUser.login}!`);
+        
+    } catch (error) {
+        alert('Ошибка регистрации: ' + error.message);
+    }
+    
+    submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+    submitBtn.disabled = false;
 });
 
 // Действия в панели управления
@@ -433,7 +501,7 @@ createServerDashboardBtn.addEventListener('click', function() {
     alert('Переход к созданию сервера...');
 });
 
-// Информация для разработчика (можно удалить в продакшене)
+// Информация для разработчика
 function showDevInfo() {
     console.log('=== Gamely Dev Info ===');
     console.log('Демо пользователь:');
@@ -446,7 +514,7 @@ function showDevInfo() {
 // Плавное появление элементов при загрузке
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    showDevInfo(); // Показываем информацию для разработчика
+    showDevInfo();
     
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {
