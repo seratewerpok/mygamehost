@@ -40,7 +40,7 @@ const serversCount = document.getElementById('serversCount');
 // Формы
 const authForm = document.getElementById('authForm');
 const registerForm = document.getElementById('registerForm');
-const authLogin = document.getElementById('authLogin');
+const authEmail = document.getElementById('authLogin'); // Теперь только email
 const authPassword = document.getElementById('authPassword');
 const regEmail = document.getElementById('regEmail');
 const regLogin = document.getElementById('regLogin');
@@ -76,17 +76,7 @@ const auth = firebase.auth();
 // Константы
 const CURRENT_USER_KEY = 'gamely_current_user';
 
-const DEMO_USER = {
-    id: '98977',
-    login: 'demo',
-    email: 'demo@example.com',
-    password: '123456',
-    role: 'Пользователь',
-    balance: 0,
-    registrationDate: '18.11.2023 22:40:54'
-};
-
-// Уведомления
+// Уведомления (твой оригинальный стиль)
 function showNotification(type, title, message, duration = 5000) {
     const container = document.getElementById('notificationContainer');
     const notification = document.createElement('div');
@@ -132,7 +122,7 @@ function showNotification(type, title, message, duration = 5000) {
     }
 }
 
-// Кнопка показа пароля
+// Кнопка показа пароля (твой оригинальный)
 function createPasswordToggle(inputId) {
     const input = document.getElementById(inputId);
     const container = document.createElement('div');
@@ -155,71 +145,7 @@ function createPasswordToggle(inputId) {
     container.appendChild(toggleBtn);
 }
 
-// База данных
-async function initUsersDatabase() {
-    try {
-        const demoUserDoc = await db.collection('users').doc(DEMO_USER.id).get();
-        if (!demoUserDoc.exists) {
-            await db.collection('users').doc(DEMO_USER.id).set(DEMO_USER);
-            console.log('Демо-пользователь создан');
-        }
-    } catch (error) {
-        console.error('Ошибка инициализации базы:', error);
-    }
-}
-
-// Работа с пользователями
-async function getUserByEmail(email) {
-    try {
-        const snapshot = await db.collection('users')
-            .where('email', '==', email.toLowerCase())
-            .limit(1)
-            .get();
-        return snapshot.empty ? null : snapshot.docs[0].data();
-    } catch (error) {
-        console.error('Ошибка поиска по email:', error);
-        return null;
-    }
-}
-
-async function getUserByLogin(login) {
-    try {
-        const snapshot = await db.collection('users')
-            .where('login', '==', login.toLowerCase())
-            .limit(1)
-            .get();
-        return snapshot.empty ? null : snapshot.docs[0].data();
-    } catch (error) {
-        console.error('Ошибка поиска по логину:', error);
-        return null;
-    }
-}
-
-async function isEmailExists(email) {
-    const user = await getUserByEmail(email);
-    return user !== null;
-}
-
-async function isLoginExists(login) {
-    const user = await getUserByLogin(login);
-    return user !== null;
-}
-
-function generateUserId() {
-    return Math.floor(10000 + Math.random() * 90000).toString();
-}
-
-// Авторизация
-async function checkAuth() {
-    await initUsersDatabase();
-    const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || 'null');
-    if (currentUser) {
-        showUserNav(currentUser.login);
-    } else {
-        showGuestNav();
-    }
-}
-
+// Показ навигации
 function showGuestNav() {
     guestNav.style.display = 'flex';
     userNav.style.display = 'none';
@@ -231,128 +157,17 @@ function showUserNav(username) {
     usernameSpan.textContent = username;
 }
 
-function updateDashboardInfo(user) {
-    infoId.textContent = user.id || '---';
-    infoLogin.textContent = user.login || '---';
-    infoEmail.textContent = user.email || '---';
-    infoRole.textContent = user.role || 'Пользователь';
-    infoBalance.textContent = (user.balance || 0) + ' руб.';
-    infoRegDate.textContent = user.registrationDate || new Date().toLocaleString();
+// Обновление дашборда
+function updateDashboardInfo(userData) {
+    infoId.textContent = userData.id || '---';
+    infoLogin.textContent = userData.login || '---';
+    infoEmail.textContent = userData.email || '---';
+    infoRole.textContent = userData.role || 'Пользователь';
+    infoBalance.textContent = (userData.balance || 0) + ' руб.';
+    infoRegDate.textContent = userData.registrationDate || new Date().toLocaleString('ru-RU');
     
     const userServers = JSON.parse(localStorage.getItem('userServers') || '[]');
     serversCount.textContent = userServers.length;
-}
-
-// Регистрация пользователя
-async function registerUser(login, email, password) {
-    const newUser = {
-        id: generateUserId(),
-        login: login,
-        email: email.toLowerCase(),
-        password: password,
-        role: 'Пользователь',
-        balance: 0,
-        registrationDate: new Date().toLocaleString('ru-RU')
-    };
-    
-    try {
-        await db.collection('users').doc(newUser.id).set(newUser);
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-        return newUser;
-    } catch (error) {
-        console.error('Ошибка регистрации:', error);
-        throw new Error('Ошибка при создании пользователя');
-    }
-}
-
-// Авторизация пользователя
-async function loginUser(login, password) {
-    try {
-        let user = await getUserByLogin(login);
-        if (!user) {
-            user = await getUserByEmail(login);
-        }
-        
-        if (user && user.password === password) {
-            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-            return user;
-        }
-        return null;
-    } catch (error) {
-        console.error('Ошибка авторизации:', error);
-        return null;
-    }
-}
-
-// Вход через Google
-async function signInWithGoogle() {
-    try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('email');
-        provider.addScope('profile');
-        
-        const result = await auth.signInWithPopup(provider);
-        const user = result.user;
-        
-        console.log('Google user:', user);
-        
-        // Проверяем, есть ли пользователь в нашей базе
-        let existingUser = await getUserByEmail(user.email);
-        
-        if (!existingUser) {
-            // Создаем нового пользователя
-            existingUser = {
-                id: user.uid, // Используем UID от Google
-                login: user.displayName || user.email.split('@')[0],
-                email: user.email,
-                password: 'google_oauth',
-                role: 'Пользователь',
-                balance: 0,
-                registrationDate: new Date().toLocaleString('ru-RU'),
-                displayName: user.displayName,
-                photoURL: user.photoURL
-            };
-            
-            await db.collection('users').doc(existingUser.id).set(existingUser);
-            console.log('Новый пользователь создан через Google');
-        }
-        
-        // Сохраняем в localStorage
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(existingUser));
-        
-        return existingUser;
-        
-    } catch (error) {
-        console.error('Ошибка входа через Google:', error);
-        
-        // Детальные ошибки для отладки
-        let errorMessage = 'Не удалось войти через Google';
-        
-        switch(error.code) {
-            case 'auth/popup-blocked':
-                errorMessage = 'Всплывающее окно было заблокировано браузером';
-                break;
-            case 'auth/popup-closed-by-user':
-                errorMessage = 'Вы закрыли окно авторизации';
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Проблемы с интернет-соединением';
-                break;
-            case 'auth/unauthorized-domain':
-                errorMessage = 'Домен не авторизован. Проверь настройки Firebase';
-                break;
-        }
-        
-        throw new Error(errorMessage);
-    }
-}
-
-// Выход
-function logoutUser() {
-    localStorage.removeItem(CURRENT_USER_KEY);
-    showGuestNav();
-    navigateTo('main');
-    showNotification('info', 'Выход', 'Вы успешно вышли из аккаунта');
 }
 
 // Навигация
@@ -378,8 +193,6 @@ function navigateTo(page, addToHistory = true) {
         case 'dashboard':
             dashboardPage.style.display = 'block';
             document.title = 'Панель управления - Gamely';
-            const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || '{}');
-            updateDashboardInfo(currentUser);
             break;
     }
     
@@ -388,7 +201,6 @@ function navigateTo(page, addToHistory = true) {
     }
 }
 
-// Обработчик назад
 function handlePopState(event) {
     if (event.state && event.state.page) {
         navigateTo(event.state.page, false);
@@ -396,6 +208,141 @@ function handlePopState(event) {
         navigateTo('main', false);
     }
 }
+
+// ========== ОСНОВНОЙ ФУНКЦИОНАЛ (Firebase Architecture) ==========
+
+// Вход через Google
+async function signInWithGoogle() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+
+        // Проверяем, есть ли профиль в Firestore
+        const userRef = db.collection('users').doc(user.uid);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+            // Создаем новый профиль
+            const newUser = {
+                id: user.uid,
+                login: user.displayName || user.email.split('@')[0],
+                email: user.email.toLowerCase(),
+                role: 'Пользователь',
+                balance: 0,
+                registrationDate: new Date().toLocaleString('ru-RU'),
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            };
+            await userRef.set(newUser);
+            
+            showUserNav(newUser.login);
+            updateDashboardInfo(newUser);
+            showNotification('success', 'Успешно!', `Добро пожаловать, ${newUser.login}!`);
+        } else {
+            const userData = doc.data();
+            showUserNav(userData.login);
+            updateDashboardInfo(userData);
+            showNotification('success', 'С возвращением!', `Рады видеть, ${userData.login}!`);
+        }
+
+        navigateTo('main');
+        return true;
+    } catch (error) {
+        console.error('Google auth error:', error);
+        let msg = 'Не удалось войти через Google';
+        if (error.code === 'auth/popup-blocked') msg = 'Всплывающее окно заблокировано браузером';
+        if (error.code === 'auth/popup-closed-by-user') msg = 'Вы закрыли окно авторизации';
+        showNotification('error', 'Ошибка', msg);
+        return false;
+    }
+}
+
+// Регистрация через Email/Password
+async function registerWithEmail(email, login, password) {
+    try {
+        // Создаем пользователя в Firebase Authentication
+        const credential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // Сохраняем дополнительные данные в Firestore
+        const userData = {
+            id: credential.user.uid,
+            login: login || email.split('@')[0],
+            email: email.toLowerCase(),
+            role: 'Пользователь',
+            balance: 0,
+            registrationDate: new Date().toLocaleString('ru-RU')
+        };
+        
+        await db.collection('users').doc(credential.user.uid).set(userData);
+        
+        showUserNav(userData.login);
+        updateDashboardInfo(userData);
+        showNotification('success', 'Успех!', `Добро пожаловать, ${userData.login}!`);
+        navigateTo('main');
+        
+        return true;
+    } catch (error) {
+        console.error('Registration error:', error);
+        let msg = 'Ошибка регистрации';
+        if (error.code === 'auth/email-already-in-use') msg = 'Этот email уже зарегистрирован';
+        if (error.code === 'auth/weak-password') msg = 'Пароль слишком слабый (минимум 6 символов)';
+        if (error.code === 'auth/invalid-email') msg = 'Неверный формат email';
+        showNotification('error', 'Ошибка', msg);
+        return false;
+    }
+}
+
+// Вход через Email/Password
+async function loginWithEmail(email, password) {
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // Успешный вход обработается в onAuthStateChanged
+        return true;
+    } catch (error) {
+        console.error('Login error:', error);
+        let msg = 'Неверный email или пароль';
+        if (error.code === 'auth/user-not-found') msg = 'Пользователь не найден';
+        if (error.code === 'auth/wrong-password') msg = 'Неверный пароль';
+        if (error.code === 'auth/invalid-email') msg = 'Неверный формат email';
+        showNotification('error', 'Ошибка', msg);
+        return false;
+    }
+}
+
+// Автоматическое обновление интерфейса при изменении статуса авторизации
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        // Пользователь вошел
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            showUserNav(userData.login);
+            updateDashboardInfo(userData);
+            
+            // Если находимся на странице авторизации/регистрации - переходим на главную
+            if (location.hash === '#auth' || location.hash === '#register') {
+                navigateTo('main');
+            }
+        }
+    } else {
+        // Пользователь вышел
+        showGuestNav();
+        localStorage.removeItem(CURRENT_USER_KEY);
+    }
+});
+
+// Выход
+function logoutUser() {
+    auth.signOut();
+    showNotification('info', 'Выход', 'Вы успешно вышли из аккаунта');
+    navigateTo('main');
+}
+
+// ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
 
 // Навигационные обработчики
 homeLink.addEventListener('click', (e) => {
@@ -430,7 +377,11 @@ dashboardLogoutBtn.addEventListener('click', (e) => {
 
 dashboardLink.addEventListener('click', (e) => {
     e.preventDefault();
-    navigateTo('dashboard');
+    if (auth.currentUser) {
+        navigateTo('dashboard');
+    } else {
+        navigateTo('auth');
+    }
 });
 
 dashboardHomeLink.addEventListener('click', (e) => {
@@ -440,8 +391,7 @@ dashboardHomeLink.addEventListener('click', (e) => {
 
 createServerBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
-    if (currentUser) {
+    if (auth.currentUser) {
         navigateTo('dashboard');
     } else {
         navigateTo('auth');
@@ -450,8 +400,7 @@ createServerBtn.addEventListener('click', (e) => {
 
 heroCreateBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    const currentUser = localStorage.getItem(CURRENT_USER_KEY);
-    if (currentUser) {
+    if (auth.currentUser) {
         navigateTo('dashboard');
     } else {
         navigateTo('auth');
@@ -478,15 +427,7 @@ googleAuthBtn.addEventListener('click', async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход через Google...';
     btn.disabled = true;
     
-    try {
-        const user = await signInWithGoogle();
-        showUserNav(user.login);
-        navigateTo('main');
-        showNotification('success', 'Успешный вход!', `Добро пожаловать, ${user.login}!`);
-    } catch (error) {
-        console.error('Ошибка:', error);
-        showNotification('error', 'Ошибка входа', error.message);
-    }
+    await signInWithGoogle();
     
     btn.innerHTML = originalText;
     btn.disabled = false;
@@ -501,51 +442,10 @@ googleRegisterBtn.addEventListener('click', async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация через Google...';
     btn.disabled = true;
     
-    try {
-        const user = await signInWithGoogle();
-        showUserNav(user.login);
-        navigateTo('main');
-        showNotification('success', 'Регистрация успешна!', `Добро пожаловать, ${user.login}!`);
-    } catch (error) {
-        console.error('Ошибка:', error);
-        showNotification('error', 'Ошибка регистрации', error.message);
-    }
+    await signInWithGoogle();
     
     btn.innerHTML = originalText;
     btn.disabled = false;
-});
-
-// Валидация регистрации
-regEmail.addEventListener('blur', async function() {
-    const email = this.value.trim();
-    if (email && await isEmailExists(email)) {
-        const user = await getUserByEmail(email);
-        emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
-        emailError.style.display = 'block';
-    } else {
-        emailError.style.display = 'none';
-    }
-});
-
-regLogin.addEventListener('blur', async function() {
-    const login = this.value.trim();
-    if (login && await isLoginExists(login)) {
-        loginError.textContent = 'Этот логин занят';
-        loginError.style.display = 'block';
-    } else {
-        loginError.style.display = 'none';
-    }
-});
-
-regConfirmPassword.addEventListener('blur', function() {
-    const password = regPassword.value;
-    const confirmPassword = this.value;
-    if (password && confirmPassword && password !== confirmPassword) {
-        passwordError.textContent = 'Пароли не совпадают';
-        passwordError.style.display = 'block';
-    } else {
-        passwordError.style.display = 'none';
-    }
 });
 
 // Форма регистрации
@@ -553,12 +453,22 @@ registerForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const email = regEmail.value.trim();
-    const login = regLogin.value.trim();
+    const login = regLogin.value.trim() || email.split('@')[0];
     const password = regPassword.value;
     const confirmPassword = regConfirmPassword.value;
     
-    if (!email || !login || !password || !confirmPassword) {
-        showNotification('warning', 'Заполните все поля', 'Пожалуйста, заполните все поля формы');
+    if (!email || !password || !confirmPassword) {
+        showNotification('warning', 'Ошибка', 'Заполните все обязательные поля');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showNotification('warning', 'Ошибка', 'Пароли не совпадают');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('warning', 'Ошибка', 'Пароль должен быть не менее 6 символов');
         return;
     }
     
@@ -568,66 +478,25 @@ registerForm.addEventListener('submit', async function(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
     submitBtn.disabled = true;
     
-    try {
-        // Быстрые проверки
-        if (await isEmailExists(email)) {
-            showNotification('warning', 'Email занят', 'Этот email уже используется');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-        
-        if (await isLoginExists(login)) {
-            showNotification('warning', 'Логин занят', 'Этот логин уже используется');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showNotification('warning', 'Пароли не совпадают', 'Проверьте правильность ввода пароля');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-        
-        if (password.length < 6) {
-            showNotification('warning', 'Слабый пароль', 'Пароль должен быть не менее 6 символов');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-        
-        // РЕГИСТРАЦИЯ
-        const newUser = await registerUser(login, email, password);
-        
-        // УСПЕХ - сбрасываем форму и переходим
+    const success = await registerWithEmail(email, login, password);
+    
+    if (success) {
         registerForm.reset();
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        
-        // ПОСЛЕ РЕГИСТРАЦИИ ДЕЛАЕМ ТОЧНО ТАК ЖЕ КАК ПОСЛЕ АВТОРИЗАЦИИ
-        showUserNav(newUser.login);
-        navigateTo('main');
-        showNotification('success', 'Регистрация успешна!', `Добро пожаловать, ${newUser.login}!`);
-        
-    } catch (error) {
-        console.error('Ошибка:', error);
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        showNotification('error', 'Ошибка регистрации', 'Произошла ошибка при регистрации');
     }
+    
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
 });
 
 // Форма авторизации
 authForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const login = authLogin.value.trim();
+    const email = authEmail.value.trim();
     const password = authPassword.value;
     
-    if (!login || !password) {
-        showNotification('warning', 'Заполните все поля', 'Пожалуйста, введите логин/email и пароль');
+    if (!email || !password) {
+        showNotification('warning', 'Ошибка', 'Заполните email и пароль');
         return;
     }
     
@@ -637,27 +506,41 @@ authForm.addEventListener('submit', async function(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
     submitBtn.disabled = true;
     
-    try {
-        const user = await loginUser(login, password);
-        if (user) {
-            showUserNav(user.login);
-            navigateTo('main');
-            showNotification('success', 'Добро пожаловать!', `Рады видеть вас снова, ${user.login}!`);
-        } else {
-            showNotification('error', 'Ошибка входа', 'Неверный логин/email или пароль');
-        }
-    } catch (error) {
-        showNotification('error', 'Ошибка авторизации', 'Произошла ошибка при входе');
-    }
+    await loginWithEmail(email, password);
     
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
 });
 
+// Валидация формы регистрации (опционально)
+regEmail.addEventListener('blur', function() {
+    const email = this.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (email && !emailRegex.test(email)) {
+        emailError.textContent = 'Неверный формат email';
+        emailError.style.display = 'block';
+    } else {
+        emailError.style.display = 'none';
+    }
+});
+
+regConfirmPassword.addEventListener('blur', function() {
+    const password = regPassword.value;
+    const confirmPassword = this.value;
+    
+    if (password && confirmPassword && password !== confirmPassword) {
+        passwordError.textContent = 'Пароли не совпадают';
+        passwordError.style.display = 'block';
+    } else {
+        passwordError.style.display = 'none';
+    }
+});
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+
 // Загрузка страницы
 document.addEventListener('DOMContentLoaded', function() {
-    checkAuth();
-    
     createPasswordToggle('authPassword');
     createPasswordToggle('regPassword');
     createPasswordToggle('regConfirmPassword');

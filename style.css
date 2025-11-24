@@ -665,26 +665,6 @@ header {
     margin-bottom: 1rem;
     color: #c4b5fd;
     font-size: 0.9rem;
-    position: relative;
-    padding: 0 20px;
-}
-
-.social-divider::before,
-.social-divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 30%;
-    height: 1px;
-    background: #333;
-}
-
-.social-divider::before {
-    left: 0;
-}
-
-.social-divider::after {
-    right: 0;
 }
 
 .social-buttons {
@@ -1115,7 +1095,7 @@ header {
     
     .social-divider::before,
     .social-divider::after {
-        width: 25%;
+        width: 20%;
     }
 }
 
