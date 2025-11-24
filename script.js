@@ -83,6 +83,93 @@ const DEMO_USER = {
 // Состояние приложения
 let currentPage = 'main';
 
+// Система уведомлений
+function showNotification(type, title, message, duration = 5000) {
+    const container = document.getElementById('notificationContainer');
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    let icon = 'fa-info-circle';
+    switch(type) {
+        case 'success': icon = 'fa-check-circle'; break;
+        case 'error': icon = 'fa-exclamation-circle'; break;
+        case 'warning': icon = 'fa-exclamation-triangle'; break;
+        case 'info': icon = 'fa-info-circle'; break;
+    }
+    
+    notification.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-header">
+                <div class="notification-title">
+                    <i class="fas ${icon}"></i>
+                    ${title}
+                </div>
+                <button class="notification-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notification-message">${message}</div>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Анимация появления
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Закрытие по кнопке
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+        closeNotification(notification);
+    });
+    
+    // Автоматическое закрытие
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentNode) {
+                closeNotification(notification);
+            }
+        }, duration);
+    }
+    
+    return notification;
+}
+
+function closeNotification(notification) {
+    notification.classList.remove('show');
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 300);
+}
+
+// Функция для создания кнопки показа пароля
+function createPasswordToggle(inputId) {
+    const input = document.getElementById(inputId);
+    const container = document.createElement('div');
+    container.className = 'password-input-container';
+    
+    // Обертываем input в контейнер
+    input.parentNode.insertBefore(container, input);
+    container.appendChild(input);
+    
+    // Создаем кнопку показа/скрытия пароля
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'toggle-password';
+    toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+    
+    toggleBtn.addEventListener('click', function() {
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+    });
+    
+    container.appendChild(toggleBtn);
+}
+
 // Инициализация базы данных
 async function initUsersDatabase() {
     try {
@@ -250,6 +337,7 @@ function logoutUser() {
     localStorage.removeItem(CURRENT_USER_KEY);
     showGuestNav();
     navigateTo('main');
+    showNotification('info', 'Выход', 'Вы успешно вышли из аккаунта');
 }
 
 // Функция навигации с History API
@@ -403,11 +491,12 @@ authForm.addEventListener('submit', async function(e) {
     const password = authPassword.value;
     
     if (!login || !password) {
-        alert('Заполните все поля!');
+        showNotification('warning', 'Заполните все поля', 'Пожалуйста, введите логин/email и пароль');
         return;
     }
     
     const submitBtn = this.querySelector('.auth-submit');
+    const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
     submitBtn.disabled = true;
     
@@ -416,16 +505,16 @@ authForm.addEventListener('submit', async function(e) {
         if (user) {
             showUserNav(user.login);
             navigateTo('main');
-            alert(`Добро пожаловать, ${user.login}!`);
+            showNotification('success', 'Добро пожаловать!', `Рады видеть вас снова, ${user.login}!`);
         } else {
-            alert('Неверный логин/email или пароль! Попробуйте:\nЛогин: demo\nПароль: 123456');
+            showNotification('error', 'Ошибка входа', 'Неверный логин/email или пароль. Проверьте правильность введенных данных.');
         }
     } catch (error) {
-        alert('Ошибка авторизации: ' + error.message);
+        showNotification('error', 'Ошибка авторизации', error.message);
     }
     
     authForm.reset();
-    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Войти';
+    submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
 });
 
@@ -440,11 +529,12 @@ registerForm.addEventListener('submit', async function(e) {
     
     // Проверки заполненности
     if (!email || !login || !password || !confirmPassword) {
-        alert('Заполните все поля!');
+        showNotification('warning', 'Заполните все поля', 'Пожалуйста, заполните все поля формы');
         return;
     }
     
     const submitBtn = this.querySelector('.auth-submit');
+    const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
     submitBtn.disabled = true;
     
@@ -454,8 +544,9 @@ registerForm.addEventListener('submit', async function(e) {
             const user = await getUserByEmail(email);
             emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
             emailError.style.display = 'block';
-            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            showNotification('warning', 'Email уже используется', 'Этот email уже зарегистрирован в системе');
             return;
         }
         
@@ -463,8 +554,9 @@ registerForm.addEventListener('submit', async function(e) {
         if (await isLoginExists(login)) {
             loginError.textContent = 'Этот логин занят';
             loginError.style.display = 'block';
-            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            showNotification('warning', 'Логин занят', 'Этот логин уже используется другим пользователем');
             return;
         }
         
@@ -472,8 +564,9 @@ registerForm.addEventListener('submit', async function(e) {
         if (password !== confirmPassword) {
             passwordError.textContent = 'Пароли не совпадают';
             passwordError.style.display = 'block';
-            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            showNotification('warning', 'Пароли не совпадают', 'Убедитесь, что пароли в обоих полях одинаковые');
             return;
         }
         
@@ -481,35 +574,36 @@ registerForm.addEventListener('submit', async function(e) {
         if (password.length < 6) {
             passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
             passwordError.style.display = 'block';
-            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            showNotification('warning', 'Слабый пароль', 'Пароль должен содержать минимум 6 символов');
             return;
         }
         
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
         
-        // Быстрая регистрация без задержки
+        // Регистрация пользователя
         const newUser = await registerUser(login, email, password);
         showUserNav(newUser.login);
         navigateTo('main');
         registerForm.reset();
-        alert(`Регистрация успешна! Добро пожаловать, ${newUser.login}!`);
+        showNotification('success', 'Регистрация успешна!', `Добро пожаловать в Gamely, ${newUser.login}! Теперь вы можете создать свой первый сервер.`);
         
     } catch (error) {
-        alert('Ошибка регистрации: ' + error.message);
+        showNotification('error', 'Ошибка регистрации', error.message);
     }
     
-    submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Зарегистрироваться';
+    submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
 });
 
 // Действия в панели управления
 depositBtn.addEventListener('click', function() {
-    alert('Переход к пополнению баланса...');
+    showNotification('info', 'Пополнение баланса', 'Функция пополнения баланса скоро будет доступна');
 });
 
 createServerDashboardBtn.addEventListener('click', function() {
-    alert('Переход к созданию сервера...');
+    showNotification('info', 'Создание сервера', 'Функция создания сервера скоро будет доступна');
 });
 
 // Информация для разработчика
@@ -526,6 +620,11 @@ function showDevInfo() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     showDevInfo();
+    
+    // Инициализация кнопок показа пароля
+    createPasswordToggle('authPassword');
+    createPasswordToggle('regPassword');
+    createPasswordToggle('regConfirmPassword');
     
     // Обработчик кнопки "Назад"
     window.addEventListener('popstate', handlePopState);
