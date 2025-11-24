@@ -282,30 +282,36 @@ function updateDashboardInfo(user) {
     serversCount.textContent = userServers.length;
 }
 
-// Регистрация пользователя
+// Регистрация пользователя - УПРОЩЕННАЯ ВЕРСИЯ
 async function registerUser(login, email, password) {
-    const newUser = {
-        id: generateUserId(),
-        login: login,
-        email: email.toLowerCase(),
-        password: password,
-        role: 'Пользователь',
-        balance: 0,
-        registrationDate: new Date().toLocaleString()
-    };
-    
-    try {
-        // Сохраняем в Firebase
-        await db.collection('users').doc(newUser.id).set(newUser);
-        
-        // Сохраняем в localStorage для авторизации
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-        
-        return newUser;
-    } catch (error) {
-        console.error('Ошибка регистрации:', error);
-        throw new Error('Ошибка при создании пользователя');
-    }
+    return new Promise((resolve, reject) => {
+        try {
+            const newUser = {
+                id: generateUserId(),
+                login: login,
+                email: email.toLowerCase(),
+                password: password,
+                role: 'Пользователь',
+                balance: 0,
+                registrationDate: new Date().toLocaleString()
+            };
+            
+            // Сохраняем в Firebase
+            db.collection('users').doc(newUser.id).set(newUser)
+                .then(() => {
+                    // Сохраняем в localStorage для авторизации
+                    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
+                    resolve(newUser);
+                })
+                .catch(error => {
+                    console.error('Ошибка сохранения в Firebase:', error);
+                    reject(new Error('Ошибка при создании пользователя в базе данных'));
+                });
+        } catch (error) {
+            console.error('Ошибка регистрации:', error);
+            reject(new Error('Ошибка при создании пользователя'));
+        }
+    });
 }
 
 // Авторизация пользователя
@@ -518,7 +524,7 @@ authForm.addEventListener('submit', async function(e) {
     submitBtn.disabled = false;
 });
 
-// Обработка формы регистрации
+// Обработка формы регистрации - ПОЛНОСТЬЮ ПЕРЕПИСАННАЯ
 registerForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -535,6 +541,13 @@ registerForm.addEventListener('submit', async function(e) {
     
     const submitBtn = this.querySelector('.auth-submit');
     const originalText = submitBtn.innerHTML;
+    
+    // Функция для сброса кнопки
+    const resetButton = () => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    };
+    
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
     submitBtn.disabled = true;
     
@@ -544,8 +557,7 @@ registerForm.addEventListener('submit', async function(e) {
             const user = await getUserByEmail(email);
             emailError.textContent = `Эта почта зарегистрирована с логином: ${user.login}`;
             emailError.style.display = 'block';
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetButton();
             showNotification('warning', 'Email уже используется', 'Этот email уже зарегистрирован в системе');
             return;
         }
@@ -554,8 +566,7 @@ registerForm.addEventListener('submit', async function(e) {
         if (await isLoginExists(login)) {
             loginError.textContent = 'Этот логин занят';
             loginError.style.display = 'block';
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetButton();
             showNotification('warning', 'Логин занят', 'Этот логин уже используется другим пользователем');
             return;
         }
@@ -564,8 +575,7 @@ registerForm.addEventListener('submit', async function(e) {
         if (password !== confirmPassword) {
             passwordError.textContent = 'Пароли не совпадают';
             passwordError.style.display = 'block';
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetButton();
             showNotification('warning', 'Пароли не совпадают', 'Убедитесь, что пароли в обоих полях одинаковые');
             return;
         }
@@ -574,27 +584,35 @@ registerForm.addEventListener('submit', async function(e) {
         if (password.length < 6) {
             passwordError.textContent = 'Пароль должен содержать минимум 6 символов';
             passwordError.style.display = 'block';
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            resetButton();
             showNotification('warning', 'Слабый пароль', 'Пароль должен содержать минимум 6 символов');
             return;
         }
         
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
         
-        // Регистрация пользователя
-        const newUser = await registerUser(login, email, password);
+        // Регистрация пользователя с таймаутом
+        const registrationPromise = registerUser(login, email, password);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Таймаут регистрации')), 10000)
+        );
+        
+        const newUser = await Promise.race([registrationPromise, timeoutPromise]);
+        
+        // УСПЕШНАЯ РЕГИСТРАЦИЯ
+        registerForm.reset();
+        resetButton();
+        
         showUserNav(newUser.login);
         navigateTo('main');
-        registerForm.reset();
         showNotification('success', 'Регистрация успешна!', `Добро пожаловать в Gamely, ${newUser.login}! Теперь вы можете создать свой первый сервер.`);
         
     } catch (error) {
-        showNotification('error', 'Ошибка регистрации', error.message);
+        // ОШИБКА РЕГИСТРАЦИИ
+        console.error('Ошибка регистрации:', error);
+        resetButton();
+        showNotification('error', 'Ошибка регистрации', error.message || 'Произошла неизвестная ошибка при регистрации');
     }
-    
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
 });
 
 // Действия в панели управления
