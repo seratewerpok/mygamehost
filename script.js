@@ -3,6 +3,8 @@ const mainPage = document.getElementById('mainPage');
 const authPage = document.getElementById('authPage');
 const registerPage = document.getElementById('registerPage');
 const dashboardPage = document.getElementById('dashboardPage');
+const createServerPage = document.getElementById('createServerPage');
+const balancePage = document.getElementById('balancePage');
 
 // Навигация
 const homeLink = document.getElementById('homeLink');
@@ -18,6 +20,22 @@ const dashboardHomeLink = document.getElementById('dashboardHomeLink');
 const dashboardLogoutBtn = document.getElementById('dashboardLogoutBtn');
 const createServerDashboardBtn = document.getElementById('createServerDashboardBtn');
 const depositBtn = document.getElementById('depositBtn');
+
+// Создание сервера
+const createServerMenuLink = document.getElementById('createServerMenuLink');
+const createServerHomeLink = document.getElementById('createServerHomeLink');
+const createServerDashboardLink = document.getElementById('createServerDashboardLink');
+const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+const continueToStep2Btn = document.getElementById('continueToStep2Btn');
+
+// Баланс
+const balanceMenuLink = document.getElementById('balanceMenuLink');
+const balanceHomeLink = document.getElementById('balanceHomeLink');
+const balanceDashboardLink = document.getElementById('balanceDashboardLink');
+const currentBalance = document.getElementById('currentBalance');
+const depositAmount = document.getElementById('depositAmount');
+const depositSubmitBtn = document.getElementById('depositSubmitBtn');
+const amountPresets = document.querySelectorAll('.amount-preset');
 
 // Кнопки Google
 const googleAuthBtn = document.getElementById('googleAuthBtn');
@@ -40,7 +58,7 @@ const serversCount = document.getElementById('serversCount');
 // Формы
 const authForm = document.getElementById('authForm');
 const registerForm = document.getElementById('registerForm');
-const authEmail = document.getElementById('authLogin'); // Теперь только email
+const authEmail = document.getElementById('authLogin');
 const authPassword = document.getElementById('authPassword');
 const regEmail = document.getElementById('regEmail');
 const regLogin = document.getElementById('regLogin');
@@ -76,7 +94,7 @@ const auth = firebase.auth();
 // Константы
 const CURRENT_USER_KEY = 'gamely_current_user';
 
-// Уведомления (твой оригинальный стиль)
+// Уведомления
 function showNotification(type, title, message, duration = 5000) {
     const container = document.getElementById('notificationContainer');
     const notification = document.createElement('div');
@@ -122,7 +140,7 @@ function showNotification(type, title, message, duration = 5000) {
     }
 }
 
-// Кнопка показа пароля (твой оригинальный)
+// Кнопка показа пароля
 function createPasswordToggle(inputId) {
     const input = document.getElementById(inputId);
     const container = document.createElement('div');
@@ -170,12 +188,19 @@ function updateDashboardInfo(userData) {
     serversCount.textContent = userServers.length;
 }
 
+// Обновление баланса на странице баланса
+function updateBalancePage(userData) {
+    currentBalance.textContent = (userData.balance || 0) + ' ₽';
+}
+
 // Навигация
 function navigateTo(page, addToHistory = true) {
     mainPage.style.display = 'none';
     authPage.style.display = 'none';
     registerPage.style.display = 'none';
     dashboardPage.style.display = 'none';
+    createServerPage.style.display = 'none';
+    balancePage.style.display = 'none';
     
     switch(page) {
         case 'main':
@@ -193,6 +218,14 @@ function navigateTo(page, addToHistory = true) {
         case 'dashboard':
             dashboardPage.style.display = 'block';
             document.title = 'Панель управления - Gamely';
+            break;
+        case 'createServer':
+            createServerPage.style.display = 'block';
+            document.title = 'Создание сервера - Gamely';
+            break;
+        case 'balance':
+            balancePage.style.display = 'block';
+            document.title = 'Пополнение баланса - Gamely';
             break;
     }
     
@@ -241,11 +274,13 @@ async function signInWithGoogle() {
             
             showUserNav(newUser.login);
             updateDashboardInfo(newUser);
+            updateBalancePage(newUser);
             showNotification('success', 'Успешно!', `Добро пожаловать, ${newUser.login}!`);
         } else {
             const userData = doc.data();
             showUserNav(userData.login);
             updateDashboardInfo(userData);
+            updateBalancePage(userData);
             showNotification('success', 'С возвращением!', `Рады видеть, ${userData.login}!`);
         }
 
@@ -281,6 +316,7 @@ async function registerWithEmail(email, login, password) {
         
         showUserNav(userData.login);
         updateDashboardInfo(userData);
+        updateBalancePage(userData);
         showNotification('success', 'Успех!', `Добро пожаловать, ${userData.login}!`);
         navigateTo('main');
         
@@ -313,6 +349,38 @@ async function loginWithEmail(email, password) {
     }
 }
 
+// Пополнение баланса
+async function depositBalance(userId, amount) {
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            throw new Error('Пользователь не найден');
+        }
+        
+        const userData = userDoc.data();
+        const newBalance = (userData.balance || 0) + amount;
+        
+        // Обновляем баланс в Firestore
+        await userRef.update({
+            balance: newBalance
+        });
+        
+        // Обновляем интерфейс
+        updateDashboardInfo({ ...userData, balance: newBalance });
+        updateBalancePage({ ...userData, balance: newBalance });
+        
+        showNotification('success', 'Баланс пополнен!', `На ваш счет зачислено ${amount} ₽`);
+        return true;
+        
+    } catch (error) {
+        console.error('Deposit error:', error);
+        showNotification('error', 'Ошибка', 'Не удалось пополнить баланс');
+        return false;
+    }
+}
+
 // Автоматическое обновление интерфейса при изменении статуса авторизации
 auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -322,6 +390,7 @@ auth.onAuthStateChanged(async (user) => {
             const userData = userDoc.data();
             showUserNav(userData.login);
             updateDashboardInfo(userData);
+            updateBalancePage(userData);
             
             // Если находимся на странице авторизации/регистрации - переходим на главную
             if (location.hash === '#auth' || location.hash === '#register') {
@@ -392,7 +461,7 @@ dashboardHomeLink.addEventListener('click', (e) => {
 createServerBtn.addEventListener('click', (e) => {
     e.preventDefault();
     if (auth.currentUser) {
-        navigateTo('dashboard');
+        navigateTo('createServer');
     } else {
         navigateTo('auth');
     }
@@ -401,7 +470,7 @@ createServerBtn.addEventListener('click', (e) => {
 heroCreateBtn.addEventListener('click', (e) => {
     e.preventDefault();
     if (auth.currentUser) {
-        navigateTo('dashboard');
+        navigateTo('createServer');
     } else {
         navigateTo('auth');
     }
@@ -409,12 +478,128 @@ heroCreateBtn.addEventListener('click', (e) => {
 
 createServerDashboardBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    showNotification('info', 'Создание сервера', 'Функция создания сервера скоро будет доступна');
+    if (auth.currentUser) {
+        navigateTo('createServer');
+    } else {
+        navigateTo('auth');
+    }
 });
 
 depositBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    showNotification('info', 'Пополнение баланса', 'Функция пополнения баланса скоро будет доступна');
+    if (auth.currentUser) {
+        navigateTo('balance');
+    } else {
+        navigateTo('auth');
+    }
+});
+
+// Обработчики создания сервера
+createServerMenuLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (auth.currentUser) {
+        navigateTo('createServer');
+    } else {
+        navigateTo('auth');
+    }
+});
+
+createServerHomeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('main');
+});
+
+createServerDashboardLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('dashboard');
+});
+
+backToDashboardBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('dashboard');
+});
+
+continueToStep2Btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showNotification('info', 'Создание сервера', 'Переход ко второму шагу будет реализован позже');
+});
+
+// Обработчики страницы баланса
+balanceMenuLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (auth.currentUser) {
+        navigateTo('balance');
+    } else {
+        navigateTo('auth');
+    }
+});
+
+balanceHomeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('main');
+});
+
+balanceDashboardLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('dashboard');
+});
+
+// Быстрый выбор суммы пополнения
+amountPresets.forEach(preset => {
+    preset.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Убираем активный класс у всех пресетов
+        amountPresets.forEach(p => p.classList.remove('active'));
+        
+        // Добавляем активный класс текущему пресету
+        preset.classList.add('active');
+        
+        // Устанавливаем значение в поле ввода
+        const amount = preset.getAttribute('data-amount');
+        depositAmount.value = amount;
+    });
+});
+
+// Пополнение баланса
+depositSubmitBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    const amount = parseInt(depositAmount.value);
+    
+    if (!amount || amount < 10) {
+        showNotification('warning', 'Ошибка', 'Минимальная сумма пополнения - 10 ₽');
+        return;
+    }
+    
+    if (amount > 50000) {
+        showNotification('warning', 'Ошибка', 'Максимальная сумма пополнения - 50 000 ₽');
+        return;
+    }
+    
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('error', 'Ошибка', 'Необходимо авторизоваться');
+        navigateTo('auth');
+        return;
+    }
+    
+    const originalText = depositSubmitBtn.innerHTML;
+    depositSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Пополнение...';
+    depositSubmitBtn.disabled = true;
+    
+    // Имитация платежной системы (в реальности здесь будет интеграция с ЮKassa и т.д.)
+    setTimeout(async () => {
+        const success = await depositBalance(user.uid, amount);
+        
+        if (success) {
+            depositAmount.value = '';
+            amountPresets.forEach(p => p.classList.remove('active'));
+        }
+        
+        depositSubmitBtn.innerHTML = originalText;
+        depositSubmitBtn.disabled = false;
+    }, 2000);
 });
 
 // Кнопки Google
@@ -512,7 +697,7 @@ authForm.addEventListener('submit', async function(e) {
     submitBtn.disabled = false;
 });
 
-// Валидация формы регистрации (опционально)
+// Валидация формы регистрации
 regEmail.addEventListener('blur', function() {
     const email = this.value.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -548,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('popstate', handlePopState);
     
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['main', 'auth', 'register', 'dashboard'].includes(hash)) {
+    if (hash && ['main', 'auth', 'register', 'dashboard', 'createServer', 'balance'].includes(hash)) {
         navigateTo(hash, false);
     } else {
         navigateTo('main', true);

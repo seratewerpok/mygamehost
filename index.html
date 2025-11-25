@@ -54,9 +54,9 @@
                         </button>
                         <div class="user-dropdown-content">
                             <a href="#" id="dashboardLink"><i class="fas fa-tachometer-alt"></i> Панель управления</a>
+                            <a href="#" id="balanceMenuLink"><i class="fas fa-wallet"></i> Пополнить баланс</a>
+                            <a href="#" id="createServerMenuLink"><i class="fas fa-plus-circle"></i> Создать сервер</a>
                             <a href="#"><i class="fas fa-server"></i> Список серверов</a>
-                            <a href="#"><i class="fas fa-plus-circle"></i> Создать сервер</a>
-                            <a href="#"><i class="fas fa-wallet"></i> Пополнить баланс</a>
                             <div class="dropdown-divider"></div>
                             <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Выйти</a>
                         </div>
@@ -328,6 +328,176 @@
                                 <p>У вас пока нет серверов</p>
                                 <button class="btn-primary small-btn" id="createServerDashboardBtn">Создать сервер</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Страница создания сервера -->
+    <section class="auth-page" id="createServerPage">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="breadcrumbs">
+                    <a href="#" id="createServerHomeLink">Главная</a> > 
+                    <a href="#" id="createServerDashboardLink">Панель управления</a> > 
+                    <span>Оформление нового сервера</span>
+                </div>
+                <h1>ОФОРМЛЕНИЕ СЕРВЕРА</h1>
+            </div>
+
+            <div class="server-creation-container">
+                <div class="creation-steps">
+                    <div class="step active">1. Выбор тарифа</div>
+                    <div class="step">2. Настройка</div>
+                    <div class="step">3. Подтверждение</div>
+                </div>
+
+                <div class="server-creation-content">
+                    <div class="plans-section">
+                        <h2>ШАГ 1: ВЫБЕРИТЕ ТАРИФ</h2>
+                        <div class="plans-grid">
+                            <div class="plan-card selected" data-plan="free">
+                                <div class="plan-header">
+                                    <h3>Бесплатный</h3>
+                                    <div class="plan-price">0₽</div>
+                                </div>
+                                <div class="plan-specs">
+                                    <div class="spec-item">
+                                        <i class="fas fa-microchip"></i>
+                                        <span>85% CPU</span>
+                                    </div>
+                                    <div class="spec-item">
+                                        <i class="fas fa-memory"></i>
+                                        <span>1.75 GB RAM</span>
+                                    </div>
+                                    <div class="spec-item">
+                                        <i class="fas fa-hdd"></i>
+                                        <span>3 GB диска</span>
+                                    </div>
+                                </div>
+                                <div class="plan-description">
+                                    <p>Идеально для тестирования и небольших проектов</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="server-configuration">
+                        <div class="config-left">
+                            <h3>Тариф Бесплатный (0₽)</h3>
+                            <p class="config-note">Это просто рекомендация. Вы можете поставить любую версию!</p>
+                            
+                            <div class="version-selection">
+                                <h4>Версия Minecraft:</h4>
+                                <select class="version-select">
+                                    <option value="1.20.1">Minecraft 1.20.1</option>
+                                    <option value="1.19.4">Minecraft 1.19.4</option>
+                                    <option value="1.18.2">Minecraft 1.18.2</option>
+                                    <option value="1.17.1">Minecraft 1.17.1</option>
+                                    <option value="1.16.5">Minecraft 1.16.5</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="config-right">
+                            <div class="selected-specs">
+                                <h4>ВЫБРАННЫЕ ХАРАКТЕРИСТИКИ</h4>
+                                <div class="specs-list">
+                                    <div class="spec-line">
+                                        <span>Максимальная нагрузка:</span>
+                                        <span>85% vCPU</span>
+                                    </div>
+                                    <div class="spec-line">
+                                        <span>Оперативная память:</span>
+                                        <span>1792 MБ</span>
+                                    </div>
+                                    <div class="spec-line">
+                                        <span>Места на диске:</span>
+                                        <span>3 Гб (NVMe SSD)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="additional-options">
+                                <h4>ДОПОЛНИТЕЛЬНЫЕ ОПЦИИ</h4>
+                                <div class="options-list">
+                                    <div class="option-line">
+                                        <span>Количество бэкапов:</span>
+                                        <span>0 (0₽)</span>
+                                    </div>
+                                    <div class="option-line">
+                                        <span>Количество баз данных:</span>
+                                        <span>0 (0₽)</span>
+                                    </div>
+                                    <div class="option-line">
+                                        <span>Дополнительные порты:</span>
+                                        <span>нет (0₽)</span>
+                                    </div>
+                                    <div class="option-line">
+                                        <span>DDOS защита:</span>
+                                        <span>обычная (0₽)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="total-section">
+                                <div class="total-line">
+                                    <span>ИТОГ К ОПЛАТЕ:</span>
+                                    <span class="total-price">0₽</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="creation-actions">
+                        <button class="btn-secondary" id="backToDashboardBtn">Вернуться назад</button>
+                        <button class="btn-primary" id="continueToStep2Btn">Продолжить →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Страница пополнения баланса -->
+    <section class="auth-page" id="balancePage">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="breadcrumbs">
+                    <a href="#" id="balanceHomeLink">Главная</a> > 
+                    <a href="#" id="balanceDashboardLink">Панель управления</a> > 
+                    <span>Баланс аккаунта</span>
+                </div>
+                <h1>БАЛАНС АККАУНТА</h1>
+            </div>
+
+            <div class="balance-container">
+                <div class="balance-card">
+                    <div class="balance-header">
+                        <h2>Текущий баланс</h2>
+                        <div class="balance-amount" id="currentBalance">0 ₽</div>
+                    </div>
+
+                    <div class="deposit-section">
+                        <h3>Пополнение баланса</h3>
+                        <div class="deposit-form">
+                            <div class="form-group">
+                                <label>Сумма для пополнения:</label>
+                                <div class="amount-input-container">
+                                    <input type="number" id="depositAmount" placeholder="Введите сумму" min="10" step="10">
+                                    <span class="currency">₽</span>
+                                </div>
+                                <div class="amount-presets">
+                                    <button class="amount-preset" data-amount="100">100 ₽</button>
+                                    <button class="amount-preset" data-amount="500">500 ₽</button>
+                                    <button class="amount-preset" data-amount="1000">1000 ₽</button>
+                                    <button class="amount-preset" data-amount="2000">2000 ₽</button>
+                                </div>
+                            </div>
+                            <button class="btn-primary deposit-submit" id="depositSubmitBtn">
+                                Пополнить →
+                            </button>
                         </div>
                     </div>
                 </div>
